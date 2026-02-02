@@ -10,7 +10,7 @@ import {
   ChevronDown,
   Menu
 } from "lucide-react";
-import "../css/Header.css";
+import "../css/header.css";
 import { getBusinessOwnerProfile } from "../api/ProfileAPI";
 import { Link } from "react-router-dom";
 export default function Header({ toggleSidebar }) { // Nhận prop toggleSidebar nếu muốn làm mobile responsive sau này
