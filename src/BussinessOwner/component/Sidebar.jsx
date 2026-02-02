@@ -6,6 +6,7 @@ import {
   LayoutDashboard,
   UtensilsCrossed,
   ClipboardList,
+  Settings,
   LogOut
 } from "lucide-react";
 
@@ -57,6 +58,16 @@ export default function Sidebar() {
           >
             <ClipboardList size={20} />
             <span>Thực đơn</span>
+          </NavLink>
+
+          <NavLink
+            to="/bussiness/settings"
+            className={({ isActive }) =>
+              `nav-item ${isActive ? "active" : ""}`
+            }
+          >
+            <Settings size={20} />
+            <span>Cài đặt</span>
           </NavLink>
         </Nav>
       </div>

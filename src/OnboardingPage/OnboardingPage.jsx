@@ -31,8 +31,29 @@ export default function OnboardingPage() {
   const [error, setError] = useState('');
 
   // Payment State
-  const [paymentData, setPaymentData] = useState(null); // { qr_url, payment_code, ... }
-  const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, paid, expired
+  const [paymentData, setPaymentData] = useState(null);
+  const [paymentStatus, setPaymentStatus] = useState('pending');
+
+  // Bank Setup State (Step 4)
+  const [bankData, setBankData] = useState({
+    bank_code: '',
+    account_number: '',
+    account_name: ''
+  });
+  const [bankSaving, setBankSaving] = useState(false);
+  const [restaurantId, setRestaurantId] = useState(null);
+
+  // Supported Banks
+  const SUPPORTED_BANKS = [
+    { code: 'MB', name: 'MB Bank' },
+    { code: 'VCB', name: 'Vietcombank' },
+    { code: 'TCB', name: 'Techcombank' },
+    { code: 'ACB', name: 'ACB' },
+    { code: 'VPB', name: 'VPBank' },
+    { code: 'TPB', name: 'TPBank' },
+    { code: 'BIDV', name: 'BIDV' },
+    { code: 'VTB', name: 'Vietinbank' },
+  ];
 
   const packages = getActivePackages();
 
@@ -192,9 +213,12 @@ export default function OnboardingPage() {
       const result = await login(registerData.email, registerData.password);
 
       if (result.success) {
-        setTimeout(() => {
-          navigate('/bussiness');
-        }, 1500);
+        // Lấy restaurant_id từ API response và chuyển sang Step 4
+        if (result.restaurant_id) {
+          setRestaurantId(result.restaurant_id);
+          localStorage.setItem('restaurant_id', result.restaurant_id);
+        }
+        setStep(4); // Chuyển sang Step 4 - Bank Setup
       } else {
         showError('Đăng nhập tự động thất bại. Vui lòng đăng nhập lại.');
         setTimeout(() => {
@@ -206,6 +230,51 @@ export default function OnboardingPage() {
       showError('Có lỗi xảy ra khi đăng nhập');
       navigate('/');
     }
+  };
+
+  // 4. Xử lý liên kết ngân hàng (Step 4)
+  const handleBankSubmit = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!bankData.bank_code || !bankData.account_number || !bankData.account_name) {
+      setError('Vui lòng điền đầy đủ thông tin');
+      return;
+    }
+
+    setBankSaving(true);
+    try {
+      const restId = restaurantId || localStorage.getItem('restaurant_id');
+      const token = localStorage.getItem('token');
+
+      await fetch(`${BASE_URL}/api/v1/restaurants/${restId}/sepay/link`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          bank_code: bankData.bank_code,
+          account_number: bankData.account_number,
+          account_name: bankData.account_name
+        })
+      });
+
+      showSuccess('Liên kết ngân hàng thành công!');
+      setTimeout(() => {
+        navigate('/bussiness');
+      }, 1000);
+    } catch (err) {
+      console.error('Bank link error:', err);
+      setError('Liên kết thất bại. Vui lòng thử lại.');
+    } finally {
+      setBankSaving(false);
+    }
+  };
+
+  const handleSkipBank = () => {
+    showSuccess('Bạn có thể cấu hình ngân hàng sau trong phần Cài đặt');
+    navigate('/bussiness');
   };
 
   const handleCancel = () => {
@@ -505,6 +574,87 @@ export default function OnboardingPage() {
                 <p>Không thể tải thông tin thanh toán.</p>
               </div>
             )}
+          </div>
+        )}
+
+        {/* STEP 4: BANK SETUP */}
+        {step === 4 && (
+          <div className="onboarding-step step-4">
+            <div className="step-header text-center mb-4">
+              <div className="success-icon mb-3">
+                <span style={{ fontSize: '48px' }}>🎉</span>
+              </div>
+              <h2>Đăng ký thành công!</h2>
+              <p className="text-muted">Cấu hình tài khoản ngân hàng để nhận thanh toán từ khách hàng</p>
+            </div>
+
+            <div className="bank-setup-card" style={{ maxWidth: '500px', margin: '0 auto' }}>
+              <form onSubmit={handleBankSubmit} className="bank-form">
+                {error && (
+                  <div className="alert alert-danger">{error}</div>
+                )}
+
+                <div className="form-group mb-3">
+                  <label className="form-label fw-bold">Ngân hàng</label>
+                  <select
+                    className="form-select"
+                    value={bankData.bank_code}
+                    onChange={(e) => setBankData({ ...bankData, bank_code: e.target.value })}
+                  >
+                    <option value="">-- Chọn ngân hàng --</option>
+                    {SUPPORTED_BANKS.map((bank) => (
+                      <option key={bank.code} value={bank.code}>
+                        {bank.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="form-group mb-3">
+                  <label className="form-label fw-bold">Số tài khoản</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="VD: 0393531965"
+                    value={bankData.account_number}
+                    onChange={(e) => setBankData({ ...bankData, account_number: e.target.value })}
+                  />
+                </div>
+
+                <div className="form-group mb-4">
+                  <label className="form-label fw-bold">Tên chủ tài khoản</label>
+                  <input
+                    type="text"
+                    className="form-control"
+                    placeholder="VD: NGUYEN VAN A"
+                    value={bankData.account_name}
+                    onChange={(e) => setBankData({ ...bankData, account_name: e.target.value.toUpperCase() })}
+                    style={{ textTransform: 'uppercase' }}
+                  />
+                </div>
+
+                <div className="d-flex gap-3">
+                  <button
+                    type="submit"
+                    className="btn btn-primary flex-fill"
+                    disabled={bankSaving}
+                  >
+                    {bankSaving ? 'Đang xử lý...' : 'Liên kết ngân hàng'}
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-outline-secondary"
+                    onClick={handleSkipBank}
+                  >
+                    Bỏ qua
+                  </button>
+                </div>
+
+                <p className="text-muted text-center mt-3 small">
+                  Bạn có thể cấu hình sau trong phần Cài đặt
+                </p>
+              </form>
+            </div>
           </div>
         )}
       </div>

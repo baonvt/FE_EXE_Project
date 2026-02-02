@@ -24,6 +24,7 @@ import {
   CheckCircle2,
   Clock,
   LayoutGrid,
+  QrCode,
 } from "lucide-react";
 import {
   getTableOrders,
