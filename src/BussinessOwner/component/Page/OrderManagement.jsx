@@ -16,18 +16,14 @@ import {
 import { QRCodeCanvas } from "qrcode.react";
 import { useNavigate } from "react-router-dom";
 import {
-  MoreVertical,
-  Users,
-  QrCode,
   Trash2,
   Edit3,
   Search,
   Plus,
-  RefreshCcw,
-  LayoutGrid,
   Coffee,
   CheckCircle2,
-  Clock, // Import thêm Clock
+  Clock,
+  LayoutGrid,
 } from "lucide-react";
 import {
   getTableOrders,
@@ -103,6 +99,7 @@ export default function OrderManagement() {
 
   useEffect(() => {
     fetchTables();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const fetchTables = async () => {
@@ -112,20 +109,22 @@ export default function OrderManagement() {
       if (!Array.isArray(tableList)) tableList = [];
 
       const activeTables = tableList
-  .filter((table) => table.is_active === true)
-  .map((table) => {
-    const hasActiveOrder =
-      table.active_orders_count && table.active_orders_count > 0;
+        .filter((table) => table.is_active === true)
+        .map((table) => {
+          const hasActiveOrder =
+            table.active_orders_count && table.active_orders_count > 0;
 
-    return {
-      ...table,
-      status: hasActiveOrder
-        ? "serving"
-        : BACKEND_TO_FRONTEND_STATUS[table.status] || "empty",
-    };
-  });
+          return {
+            ...table,
+            status: hasActiveOrder
+              ? "serving"
+              : BACKEND_TO_FRONTEND_STATUS[table.status] || "empty",
+          };
+        });
 
 
+      // Sort tables by table_number numerically
+      activeTables.sort((a, b) => a.table_number - b.table_number);
       setTables(activeTables);
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu bàn:", error);
@@ -149,39 +148,39 @@ export default function OrderManagement() {
   };
 
   // --- HANDLERS ---
- const handleCreate = async () => {
-  const tableNumber = Number(createForm.table_number);
+  const handleCreate = async () => {
+    const tableNumber = Number(createForm.table_number);
 
-  if (!tableNumber) {
-    alert("Vui lòng nhập số bàn");
-    return;
-  }
+    if (!tableNumber) {
+      alert("Vui lòng nhập số bàn");
+      return;
+    }
 
-  // check trùng ở frontend
-  const isDuplicate = tables.some(
-    (t) => t.table_number === tableNumber
-  );
+    // check trùng ở frontend
+    const isDuplicate = tables.some(
+      (t) => t.table_number === tableNumber
+    );
 
-  if (isDuplicate) {
-    alert("Số bàn đã tồn tại");
-    return;
-  }
+    if (isDuplicate) {
+      alert("Số bàn đã tồn tại");
+      return;
+    }
 
-  const newTable = {
-    name: `Bàn ${tableNumber}`,
-    capacity: Number(createForm.capacity),
-    table_number: tableNumber,
+    const newTable = {
+      name: `Bàn ${tableNumber}`,
+      capacity: Number(createForm.capacity),
+      table_number: tableNumber,
+    };
+
+    try {
+      await createTableOrder(newTable);
+      await fetchTables();
+      setShowCreateModal(false);
+      setCreateForm({ capacity: 4, name: "", table_number: "" });
+    } catch (error) {
+      alert(error.message);
+    }
   };
-
-  try {
-    await createTableOrder(newTable);
-    await fetchTables();
-    setShowCreateModal(false);
-    setCreateForm({ capacity: 4, name: "", table_number: "" });
-  } catch (error) {
-    alert(error.message);
-  }
-};
 
 
   const handleDelete = async () => {
@@ -192,7 +191,7 @@ export default function OrderManagement() {
         setShowDeleteConfirm(false);
         setTableToDelete(null);
       }
-    } catch (error) {
+    } catch {
       alert("Lỗi khi xóa bàn");
     }
   };
@@ -217,22 +216,7 @@ export default function OrderManagement() {
     }
   };
 
-  const toggleStatus = async (table) => {
-    const newStatus = table.status === "empty" ? "serving" : "empty";
 
-    const payload = {
-      name: table.name,
-      capacity: table.capacity,
-      status: newStatus,
-    };
-
-    try {
-      await updateTableOrder(table.id, payload);
-      fetchTables();
-    } catch (error) {
-      alert("Đổi trạng thái thất bại");
-    }
-  };
 
   const handleDownloadQR = () => {
     if (qrRef.current) {
@@ -246,7 +230,8 @@ export default function OrderManagement() {
   };
 
   // Component nhỏ cho thẻ thống kê
-  const StatCard = ({ label, value, icon: Icon, color, bg }) => (
+  // eslint-disable-next-line no-unused-vars
+  const StatCard = ({ label, value, icon: IconComponent, color, bg }) => (
     <Card className="border-0 shadow-sm h-100 rounded-4">
       <Card.Body className="d-flex align-items-center justify-content-between p-3">
         <div>
@@ -261,7 +246,7 @@ export default function OrderManagement() {
           className="rounded-circle p-3 d-flex align-items-center justify-content-center"
           style={{ backgroundColor: bg, color: color }}
         >
-          <Icon size={24} />
+          <IconComponent size={24} />
         </div>
       </Card.Body>
     </Card>
@@ -286,7 +271,12 @@ export default function OrderManagement() {
             </p>
           </div>
           <Button
-            onClick={() => setShowCreateModal(true)}
+            onClick={() => {
+              // Auto-calculate next table number
+              const maxNumber = tables.reduce((max, t) => Math.max(max, t.table_number || 0), 0);
+              setCreateForm(prev => ({ ...prev, table_number: maxNumber + 1 }));
+              setShowCreateModal(true);
+            }}
             className="d-flex align-items-center gap-2 rounded-pill px-4 py-2 fw-bold shadow-sm"
             style={{ background: "#4f46e5", border: "none" }}
           >
@@ -370,11 +360,10 @@ export default function OrderManagement() {
                     <Nav.Link
                       active={filterStatus === tab.key}
                       onClick={() => setFilterStatus(tab.key)}
-                      className={`rounded-pill px-3 py-1 small fw-bold ${
-                        filterStatus === tab.key
-                          ? "bg-white text-dark shadow-sm"
-                          : "text-muted"
-                      }`}
+                      className={`rounded-pill px-3 py-1 small fw-bold ${filterStatus === tab.key
+                        ? "bg-white text-dark shadow-sm"
+                        : "text-muted"
+                        }`}
                       style={{ cursor: "pointer", transition: "all 0.2s" }}
                     >
                       {tab.label}
@@ -628,7 +617,7 @@ export default function OrderManagement() {
           {selectedTable && (
             <div className="p-4 bg-white rounded-4 shadow-sm d-inline-block border mb-4">
               <QRCodeCanvas
-                value={`https://apiqrcodeexe201-production.up.railway.app${selectedTable.qr_url}`}
+                value={`https://fbmanager.io.vn${selectedTable.qr_url}`}
                 size={220}
                 level={"H"}
               />

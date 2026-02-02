@@ -1,24 +1,22 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
-import { useRestaurant } from '../context/useRestaurant';
 import { usePricing } from '../context/usePricing';
-import { usePayment } from '../context/usePayment';
-import { PAYMENT_TYPES } from '../context/PaymentContext';
 import { useToast } from '../context/useToast';
 import './OnboardingPage.css';
+import './OnboardingPayment.css';
+
+const BASE_URL = 'https://apiqrcodeexe201-production.up.railway.app';
 
 export default function OnboardingPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { register, login } = useAuth();
-  const { addRestaurant } = useRestaurant();
+  const { login } = useAuth();
   const { getActivePackages } = usePricing();
-  const { processVNPayPayment, processMoMoPayment } = usePayment();
-  const { showSuccess, showError, showWarning } = useToast();
-  
+  const { showSuccess, showError } = useToast();
+
   const registerData = location.state?.registerData;
-  
+
   const [step, setStep] = useState(1);
   const [restaurantData, setRestaurantData] = useState({
     name: '',
@@ -28,16 +26,24 @@ export default function OnboardingPage() {
     description: ''
   });
   const [selectedPackage, setSelectedPackage] = useState(null);
-  const [selectedMethod, setSelectedMethod] = useState(null);
+  const [billingCycle, setBillingCycle] = useState('monthly');
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState('');
 
+  // Payment State
+  const [paymentData, setPaymentData] = useState(null); // { qr_url, payment_code, ... }
+  const [paymentStatus, setPaymentStatus] = useState('pending'); // pending, paid, expired
+
   const packages = getActivePackages();
 
-  if (!registerData) {
-    navigate('/');
-    return null;
-  }
+  // Redirect if no register data
+  useEffect(() => {
+    if (!registerData) {
+      navigate('/');
+    }
+  }, [registerData, navigate]);
+
+
 
   const generateSlug = (name) => {
     return name
@@ -91,116 +97,114 @@ export default function OnboardingPage() {
     }).format(amount);
   };
 
-  const handleComplete = async () => {
-    if (!selectedMethod) {
-      setError('Vui lòng chọn phương thức thanh toán');
-      return;
-    }
+  // --- PAYMENT LOGIC ---
 
+  // Hiển thị giá dựa trên chu kỳ
+  const getPackagePrice = (pkg) => {
+    return billingCycle === 'monthly' ? pkg.monthlyPrice : pkg.yearlyPrice;
+  };
+
+  // 1. Gọi API tạo subscription khi vào Step 3
+  useEffect(() => {
+    if (step === 3 && !paymentData && !isProcessing) {
+      createSubscription();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
+
+  const createSubscription = async () => {
     setIsProcessing(true);
     setError('');
 
-    // Create temporary user first
-    const tempUserId = `temp_${Date.now()}`;
-    
-    const paymentData = {
-      userId: tempUserId,
-      type: PAYMENT_TYPES.REGISTRATION,
-      packageId: selectedPackage.id,
-      packageName: selectedPackage.name,
-      amount: selectedPackage.monthlyPrice,
-      description: `Đăng ký gói ${selectedPackage.name}`,
-      restaurantName: restaurantData.name,
-    };
-
     try {
-      let result;
-      if (selectedMethod === 'vnpay') {
-        result = await processVNPayPayment(paymentData);
-      } else if (selectedMethod === 'momo') {
-        result = await processMoMoPayment(paymentData);
-      }
-
-      // if (!result.success) {
-      //   setError('Thanh toán thất bại. Vui lòng thử lại.');
-      //   setIsProcessing(false);
-      //   return;
-      // }
-
-      // Payment successful, now register user (include restaurant and package info expected by backend)
-      const registerPayload = {
+      const payload = {
         email: registerData.email,
         password: registerData.password,
         name: registerData.name,
-        phone: registerData.phone,
-        role: 'restaurant_owner',
-        // include both camelCase, PascalCase and snake_case keys to satisfy backend validation
-        restaurantName: restaurantData.name,
-        RestaurantName: restaurantData.name,
+        phone: registerData.phone || restaurantData.phone,
         restaurant_name: restaurantData.name,
-        packageId: selectedPackage?.id,
-        PackageID: selectedPackage ? Number(selectedPackage.id) : undefined,
-        package_id: selectedPackage ? Number(selectedPackage.id) : undefined,
+        package_id: selectedPackage.id,
+        billing_cycle: billingCycle
       };
 
-      console.debug('Onboarding register payload:', registerPayload);
+      console.log('Creating subscription:', payload);
 
-      const registerResult = await register(registerPayload);
-
-      if (!registerResult.success) {
-        setError(registerResult.error || 'Đăng ký không thành công. Email có thể đã tồn tại.');
-        showError(registerResult.error);
-        setIsProcessing(false);
-        return;
-      }
-
-      const newUser = registerResult.user;
-
-      // Create restaurant with active status (payment completed)
-      const expiryDate = new Date();
-      expiryDate.setMonth(expiryDate.getMonth() + 1); // 30 days paid period
-
-      const newRestaurant = addRestaurant({
-        name: restaurantData.name,
-        slug: restaurantData.slug,
-        address: restaurantData.address,
-        phone: restaurantData.phone,
-        description: restaurantData.description,
-        ownerId: newUser.id,
-        package: {
-          ...selectedPackage,
-          expiryDate: expiryDate.toISOString(),
-          isTrial: false,
-          paymentInfo: {
-            transactionId: result.details.transactionId,
-            method: result.details.method,
-            paidAt: result.details.paidAt,
-          }
-        },
-        status: 'active' // Active status after payment
+      const resp = await fetch(`${BASE_URL}/api/v1/payment/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
       });
 
-      showSuccess('Thanh toán và đăng ký thành công! Chào mừng bạn!');
+      const data = await resp.json();
 
-      // Auto login user after successful registration
-      const loginResult = await login(registerData.email, registerData.password);
+      if (!resp.ok) {
+        throw new Error(data.message || 'Không thể tạo đăng ký');
+      }
 
-      if (loginResult.success) {
-        // Auto login successful, navigate to business dashboard
+      // Success
+      setPaymentData(data.data); // data structure from API: { success: true, data: { ... } }
+      setIsProcessing(false);
+
+    } catch (err) {
+      console.error('Subscription error:', err);
+      setError(err.message);
+      setIsProcessing(false);
+    }
+  };
+
+  // 2. Poll trạng thái thanh toán
+  useEffect(() => {
+    let intervalId;
+
+    if (step === 3 && paymentData && paymentStatus === 'pending') {
+      const checkStatus = async () => {
+        try {
+          const resp = await fetch(`${BASE_URL}/api/v1/payment/subscribe/${paymentData.payment_code}/status`);
+          const data = await resp.json();
+
+          if (resp.ok && data.data && data.data.status === 'paid') {
+            setPaymentStatus('paid');
+            handlePaymentSuccess();
+            clearInterval(intervalId);
+          }
+        } catch (err) {
+          console.error('Check status error:', err); // Silent error
+        }
+      };
+
+      // Check immediately then every 3s
+      checkStatus();
+      intervalId = setInterval(checkStatus, 3000);
+    }
+
+    return () => {
+      if (intervalId) clearInterval(intervalId);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step, paymentData, paymentStatus]);
+
+  // 3. Xử lý khi thanh toán thành công
+  const handlePaymentSuccess = async () => {
+    showSuccess('Thanh toán thành công! Đang đăng nhập...');
+
+    // Auto login
+    try {
+      const result = await login(registerData.email, registerData.password);
+
+      if (result.success) {
         setTimeout(() => {
           navigate('/bussiness');
-        }, 1000);
+        }, 1500);
       } else {
-        // If auto login fails, show error but still navigate to login or landing
-        showError('Đăng ký thành công nhưng đăng nhập tự động thất bại. Vui lòng đăng nhập lại.');
+        showError('Đăng nhập tự động thất bại. Vui lòng đăng nhập lại.');
         setTimeout(() => {
           navigate('/');
         }, 2000);
       }
-
-    } catch (error) {
-      setError('Có lỗi xảy ra. Vui lòng thử lại.');
-      setIsProcessing(false);
+    } catch (err) {
+      console.error('Auto login error:', err);
+      showError('Có lỗi xảy ra khi đăng nhập');
+      navigate('/');
     }
   };
 
@@ -209,6 +213,8 @@ export default function OnboardingPage() {
       navigate('/');
     }
   };
+
+  if (!registerData) return null;
 
   return (
     <div className="onboarding-page">
@@ -236,10 +242,10 @@ export default function OnboardingPage() {
           <div className="step-content">
             <h1 className="step-title">Thiết lập thông tin nhà hàng</h1>
             <p className="step-subtitle">Để bắt đầu, vui lòng cung cấp thông tin cơ bản về nhà hàng của bạn</p>
-            
+
             <form onSubmit={handleStep1Submit} className="onboarding-form">
               {error && <div className="error-message">{error}</div>}
-              
+
               <div className="form-group">
                 <label>Tên nhà hàng *</label>
                 <input
@@ -254,7 +260,7 @@ export default function OnboardingPage() {
               <div className="form-group">
                 <label>Đường dẫn (Slug)</label>
                 <div className="slug-input">
-                  <span className="slug-prefix">{window.location.origin}/</span>
+                  <span className="slug-prefix">{window.location.host}/</span>
                   <input
                     type="text"
                     value={restaurantData.slug}
@@ -312,15 +318,38 @@ export default function OnboardingPage() {
         {/* Step 2: Package Selection */}
         {step === 2 && (
           <div className="step-content">
-            <h1 className="step-title">Chọn gói dịch vụ phù hợp</h1>
-            <p className="step-subtitle">Chọn gói phù hợp với quy mô nhà hàng của bạn</p>
-            
+            <div className="step-header-row">
+              <div>
+                <h1 className="step-title">Chọn gói dịch vụ phù hợp</h1>
+                <p className="step-subtitle">Chọn gói phù hợp với quy mô nhà hàng của bạn</p>
+              </div>
+
+              {/* Billing Cycle Toggle */}
+              <div className="billing-toggle-container">
+                <div className="billing-toggle">
+                  <span className={billingCycle === 'monthly' ? 'active' : ''}>Theo tháng</span>
+                  <label className="toggle-switch">
+                    <input
+                      type="checkbox"
+                      checked={billingCycle === 'yearly'}
+                      onChange={(e) => setBillingCycle(e.target.checked ? 'yearly' : 'monthly')}
+                    />
+                    <span className="slider"></span>
+                  </label>
+                  <span className={billingCycle === 'yearly' ? 'active' : ''}>
+                    Theo năm
+                    <span className="discount-badge">-20%</span>
+                  </span>
+                </div>
+              </div>
+            </div>
+
             {error && <div className="error-message">{error}</div>}
-            
+
             <div className="packages-grid">
               {packages.map((pkg) => (
-                <div 
-                  key={pkg.id} 
+                <div
+                  key={pkg.id}
                   className={`package-card ${selectedPackage?.id === pkg.id ? 'selected' : ''} ${pkg.popular ? 'popular' : ''}`}
                   onClick={() => handlePackageSelect(pkg)}
                 >
@@ -330,10 +359,8 @@ export default function OnboardingPage() {
                     <p className="package-description">{pkg.description}</p>
                   )}
                   <div className="package-price">
-                    {new Intl.NumberFormat('vi-VN', {
-                      style: 'currency',
-                      currency: 'VND',
-                    }).format(pkg.monthlyPrice)}/tháng
+                    {formatCurrency(getPackagePrice(pkg))}
+                    <span className="price-period">/{billingCycle === 'monthly' ? 'tháng' : 'năm'}</span>
                   </div>
                   {pkg.targetAudience && (
                     <p className="package-target-small">
@@ -366,159 +393,116 @@ export default function OnboardingPage() {
         {/* Step 3: Payment */}
         {step === 3 && (
           <div className="step-content payment-step">
-            <h1 className="step-title">Thanh toán</h1>
-            <p className="step-subtitle">Chọn phương thức và quét mã QR để thanh toán</p>
-            
-            {error && <div className="error-message">{error}</div>}
+            <h1 className="step-title">Thanh toán qua SePay</h1>
+            <p className="step-subtitle">
+              Quét mã QR dưới đây để hoàn tất đăng ký. Hệ thống sẽ tự động xác nhận sau vài giây.
+            </p>
 
-            {/* Payment Methods Selection */}
-            <div className="payment-methods-tabs">
-              <button
-                className={`payment-tab ${selectedMethod === 'vnpay' ? 'active' : ''}`}
-                onClick={() => !isProcessing && setSelectedMethod('vnpay')}
-                disabled={isProcessing}
-              >
-                <div className="tab-logo vnpay-logo">VNPAY</div>
-                <span>VNPay QR</span>
-              </button>
-              <button
-                className={`payment-tab ${selectedMethod === 'momo' ? 'active' : ''}`}
-                onClick={() => !isProcessing && setSelectedMethod('momo')}
-                disabled={isProcessing}
-              >
-                <div className="tab-logo momo-logo">MOMO</div>
-                <span>MoMo</span>
-              </button>
-            </div>
-
-            {selectedMethod && (
-              <div className="payment-gateway-container">
-                {/* Sandbox/Demo Notice */}
-                <div style={{
-                  backgroundColor: '#fff3cd',
-                  border: '2px solid #ffc107',
-                  borderRadius: '12px',
-                  padding: '1rem',
-                  marginBottom: '1.5rem',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.75rem'
-                }}>
-                  <span style={{ fontSize: '1.5rem' }}>⚠️</span>
-                  <div style={{ flex: 1 }}>
-                    <strong style={{ color: '#856404', display: 'block', marginBottom: '0.25rem' }}>
-                      Chế độ Demo/Sandbox
-                    </strong>
-                    <p style={{ margin: 0, color: '#856404', fontSize: '0.875rem' }}>
-                      Đây là môi trường demo. Thanh toán sẽ được xử lý tự động sau 2 giây mà không cần quét QR thật.
-                    </p>
-                  </div>
-                </div>
-
-                <div className="payment-gateway-box">
-                  {/* Left Side - QR Code */}
-                  <div className="payment-qr-section">
-                    <div className={`gateway-header ${selectedMethod}`}>
-                      <div className="gateway-logo">
-                        {selectedMethod === 'vnpay' ? (
-                          <>
-                            <div className="vnpay-brand">VNPAY</div>
-                            <span className="gateway-subtitle">Cổng thanh toán VNPAY-QR</span>
-                          </>
-                        ) : (
-                          <>
-                            <div className="momo-brand">MoMo</div>
-                            <span className="gateway-subtitle">Ví điện tử MoMo</span>
-                          </>
-                        )}
-                      </div>
-                    </div>
-                    
-                    <div className="qr-code-wrapper">
-                      <div className="qr-code-placeholder">
-                        <svg viewBox="0 0 100 100" className="qr-pattern">
-                          <rect x="10" y="10" width="35" height="35" fill="#000" opacity="0.8"/>
-                          <rect x="55" y="10" width="35" height="35" fill="#000" opacity="0.8"/>
-                          <rect x="10" y="55" width="35" height="35" fill="#000" opacity="0.8"/>
-                          <rect x="15" y="15" width="25" height="25" fill="#fff"/>
-                          <rect x="60" y="15" width="25" height="25" fill="#fff"/>
-                          <rect x="15" y="60" width="25" height="25" fill="#fff"/>
-                          <rect x="20" y="20" width="15" height="15" fill="#000"/>
-                          <rect x="65" y="20" width="15" height="15" fill="#000"/>
-                          <rect x="20" y="65" width="15" height="15" fill="#000"/>
-                          <rect x="55" y="55" width="12" height="12" fill="#000" opacity="0.6"/>
-                          <rect x="70" y="55" width="12" height="12" fill="#000" opacity="0.6"/>
-                          <rect x="55" y="70" width="12" height="12" fill="#000" opacity="0.6"/>
-                          <rect x="70" y="70" width="12" height="12" fill="#000" opacity="0.6"/>
-                        </svg>
-                        <div className="scan-to-pay">Scan to Pay</div>
-                      </div>
-                      
-                      <div className="payment-instruction">
-                        <h4>Hướng dẫn thanh toán</h4>
-                        <ol>
-                          <li>Mở ứng dụng {selectedMethod === 'vnpay' ? 'Mobile Banking' : 'MoMo'}</li>
-                          <li>Quét mã QR phía trên</li>
-                          <li>Xác nhận thanh toán</li>
-                        </ol>
-                      </div>
-                      
-                      <div className="payment-amount-display">
-                        <div className="amount-label">Thanh toán trực tuyến</div>
-                        <div className="amount-value">{formatCurrency(selectedPackage.monthlyPrice)}</div>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Side - Payment Info */}
-                  <div className="payment-info-section">
-                    <div className="payment-info-header">
-                      <h3>Thông tin thanh toán</h3>
-                    </div>
-                    
-                    <div className="payment-details">
-                      <div className="detail-group">
-                        <label>Nội dung thanh toán</label>
-                        <div className="detail-value">{restaurantData.name} - Gói {selectedPackage.name}</div>
-                      </div>
-                      
-                      <div className="detail-group total-group">
-                        <label>Tổng thanh toán</label>
-                        <div className="detail-value total">{formatCurrency(selectedPackage.monthlyPrice)}</div>
-                      </div>
-                    </div>
-                    
-                    <div className="payment-actions">
-                      <button 
-                        className="btn-confirm-payment" 
-                        onClick={handleComplete}
-                        disabled={isProcessing}
-                      >
-                        {isProcessing ? (
-                          <>
-                            <span className="spinner"></span>
-                            Đang xử lý...
-                          </>
-                        ) : (
-                          'XÁC THỰC'
-                        )}
-                      </button>
-                      <button 
-                        className="btn-cancel-payment" 
-                        onClick={() => setStep(2)}
-                        disabled={isProcessing}
-                      >
-                        HỦY
-                      </button>
-                    </div>
-                  </div>
-                </div>
+            {error && (
+              <div className="error-message">
+                {error}
+                <button className="btn-retry" onClick={createSubscription} style={{ marginLeft: '10px', textDecoration: 'underline', border: 'none', background: 'none', cursor: 'pointer', color: 'inherit' }}>Thử lại</button>
               </div>
             )}
 
-            {!selectedMethod && (
-              <div className="select-method-prompt">
-                <p>Vui lòng chọn phương thức thanh toán phía trên</p>
+            {isProcessing ? (
+              <div className="loading-container">
+                <span className="spinner"></span>
+                <p>Đang tạo mã thanh toán...</p>
+              </div>
+            ) : paymentData ? (
+              // SHOW REQUESTED PAYMENT QR
+              <div className="payment-gateway-box custom-sepay-box">
+                <div className="payment-qr-section">
+                  <div className="qr-code-wrapper">
+                    {/* QR Image from API */}
+                    <div className="qr-image-container">
+                      <img
+                        src={paymentData.qr_url}
+                        alt="SePay QR"
+                        className="sepay-qr-img"
+                        onError={(e) => {
+                          // Fallback to generating QuickLink if URL fails
+                          e.target.onerror = null;
+                          e.target.src = `https://img.vietqr.io/image/${paymentData.bank_info?.bank_name}-${paymentData.bank_info?.account_number}-compact2.jpg?amount=${paymentData.amount}&addInfo=${paymentData.qr_content}&accountName=${paymentData.bank_info?.account_name}`;
+                        }}
+                      />
+                    </div>
+
+                    <div className="payment-instruction">
+                      <h4>Hướng dẫn thanh toán</h4>
+                      <ol>
+                        <li>Mở ứng dụng Ngân hàng hoặc Ví điện tử</li>
+                        <li>Quét mã QR ở trên</li>
+                        <li>Kiểm tra số tiền và nội dung chuyển khoản phải chính xác</li>
+                        <li>Xác nhận thanh toán</li>
+                      </ol>
+                    </div>
+
+                    <div className="payment-status-indicator">
+                      {paymentStatus === 'pending' && (
+                        <div className="status-badge pending">
+                          <span className="pulse-dot"></span> Đang chờ thanh toán...
+                        </div>
+                      )}
+                      {paymentStatus === 'paid' && (
+                        <div className="status-badge success">
+                          ✅ Thanh toán thành công!
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="payment-info-section">
+                  <div className="payment-info-header">
+                    <h3>Thông tin đơn hàng</h3>
+                  </div>
+
+                  <div className="payment-details">
+                    <div className="detail-group">
+                      <label>Gói dịch vụ</label>
+                      <div className="detail-value">{paymentData.package}</div>
+                    </div>
+                    <div className="detail-group">
+                      <label>Thời hạn</label>
+                      <div className="detail-value">{billingCycle === 'monthly' ? '1 Tháng' : '1 Năm'}</div>
+                    </div>
+                    <div className="detail-group">
+                      <label>Nội dung CK</label>
+                      <div className="detail-value highlight-text">{paymentData.qr_content}</div>
+                    </div>
+
+                    <div className="detail-group total-group">
+                      <label>Tổng thanh toán</label>
+                      <div className="detail-value total">{formatCurrency(paymentData.amount)}</div>
+                    </div>
+                  </div>
+
+                  <div className="manual-transfer-info">
+                    <p className="manual-note">Nếu không quét được mã, vui lòng chuyển khoản thủ công:</p>
+                    <div className="bank-details-box">
+                      <p><strong>Ngân hàng:</strong> {paymentData.bank_info?.bank_name}</p>
+                      <p><strong>Số TK:</strong> {paymentData.bank_info?.account_number}</p>
+                      <p><strong>Chủ TK:</strong> {paymentData.bank_info?.account_name}</p>
+                      <p><strong>Nội dung:</strong> {paymentData.qr_content}</p>
+                    </div>
+                  </div>
+
+                  <div className="payment-actions">
+                    <button
+                      className="btn-cancel-payment"
+                      onClick={() => setStep(2)}
+                    >
+                      Quay lại chọn gói
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              // Fallback / Initial State
+              <div className="empty-payment-state">
+                <p>Không thể tải thông tin thanh toán.</p>
               </div>
             )}
           </div>

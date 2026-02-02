@@ -1,0 +1,263 @@
+
+/* === NEW PAYMENT FLOW STYLES === */
+
+/* Step Header & Billing Toggle */
+.step-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.step-header-row .step-subtitle {
+  margin-bottom: 0;
+  text-align: left;
+}
+
+.step-header-row .step-title {
+  text-align: left;
+}
+
+.billing-toggle-container {
+  padding: 0.5rem;
+  background: white;
+  border-radius: 12px;
+}
+
+.billing-toggle {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: #f3f4f6;
+  padding: 6px 12px;
+  border-radius: 30px;
+}
+
+.billing-toggle span {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.3s;
+}
+
+.billing-toggle span.active {
+  color: #111827;
+  font-weight: 700;
+}
+
+.toggle-switch {
+  position: relative;
+  width: 44px;
+  height: 24px;
+}
+
+.toggle-switch input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.slider {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #cbd5e1;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.slider:before {
+  position: absolute;
+  content: "";
+  height: 18px;
+  width: 18px;
+  left: 3px;
+  bottom: 3px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.2);
+}
+
+input:checked + .slider {
+  background-color: #4f46e5;
+}
+
+input:checked + .slider:before {
+  transform: translateX(20px);
+}
+
+.discount-badge {
+  display: inline-block;
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 0.7rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  margin-left: 6px;
+  font-weight: 700;
+}
+
+.price-period {
+  font-size: 1rem;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+/* Loading State */
+.loading-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem;
+  gap: 1rem;
+  color: #6b7280;
+}
+
+.loading-container .spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid #e5e7eb;
+  border-top-color: #4f46e5;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+/* Custom SePay Box */
+.custom-sepay-box {
+  background: white;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
+}
+
+/* QR Section */
+.qr-image-container {
+  background: white;
+  padding: 1rem;
+  border-radius: 12px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+  margin-bottom: 1.5rem;
+  display: flex;
+  justify-content: center;
+}
+
+.sepay-qr-img {
+  max-width: 100%;
+  width: 250px;
+  height: auto;
+  border-radius: 8px;
+}
+
+/* Status Indicator */
+.payment-status-indicator {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.status-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 30px;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.status-badge.pending {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.status-badge.success {
+  background: #d1fae5;
+  color: #059669;
+}
+
+.pulse-dot {
+  width: 8px;
+  height: 8px;
+  background: currentColor;
+  border-radius: 50%;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(1.2); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+/* Highlight Text */
+.highlight-text {
+  font-weight: 800;
+  color: #4f46e5;
+  background: #eef2ff;
+  border: 1px dashed #4f46e5;
+}
+
+/* Manual Transfer Info */
+.manual-transfer-info {
+  margin-top: 1.5rem;
+  background: #f9fafb;
+  border-radius: 12px;
+  padding: 1rem;
+}
+
+.manual-note {
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 0.75rem;
+  font-style: italic;
+}
+
+.bank-details-box {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 0.75rem;
+}
+
+.bank-details-box p {
+  margin: 0.4rem 0;
+  font-size: 0.9rem;
+  color: #374151;
+  display: flex;
+  justify-content: space-between;
+}
+
+.bank-details-box p strong {
+  color: #111827;
+}
+
+.btn-retry {
+  color: #dc2626;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-weight: 600;
+}
+
+@media (max-width: 640px) {
+  .step-header-row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  
+  .billing-toggle-container {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+  }
+}
