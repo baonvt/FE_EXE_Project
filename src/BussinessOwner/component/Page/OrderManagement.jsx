@@ -112,11 +112,19 @@ export default function OrderManagement() {
       if (!Array.isArray(tableList)) tableList = [];
 
       const activeTables = tableList
-        .filter((table) => table.is_active === true)
-        .map((table) => ({
-          ...table,
-          status: BACKEND_TO_FRONTEND_STATUS[table.status] || "empty",
-        }));
+  .filter((table) => table.is_active === true)
+  .map((table) => {
+    const hasActiveOrder =
+      table.active_orders_count && table.active_orders_count > 0;
+
+    return {
+      ...table,
+      status: hasActiveOrder
+        ? "serving"
+        : BACKEND_TO_FRONTEND_STATUS[table.status] || "empty",
+    };
+  });
+
 
       setTables(activeTables);
     } catch (error) {
@@ -602,7 +610,7 @@ export default function OrderManagement() {
           {selectedTable && (
             <div className="p-4 bg-white rounded-4 shadow-sm d-inline-block border mb-4">
               <QRCodeCanvas
-                value={`http://localhost:5173/menu/${selectedTable.id}`}
+                value={`https://apiqrcodeexe201-production.up.railway.app${selectedTable.qr_url}`}
                 size={220}
                 level={"H"}
               />

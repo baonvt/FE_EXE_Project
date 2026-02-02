@@ -1,0 +1,45 @@
+.customer-notfound-page {
+  min-height: 100vh;
+  background: linear-gradient(180deg, #f8f9fa 0%, #e9ecef 100%);
+  padding-top: 3rem;
+}
+
+.notfound-card {
+  border-radius: 16px;
+  border: none;
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+.notfound-icon-wrap {
+  width: 120px;
+  height: 120px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fee2e2;
+  color: #dc2626;
+  border-radius: 50%;
+}
+
+.notfound-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.notfound-desc {
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.notfound-card .btn-primary {
+  background: #667eea;
+  border-color: #667eea;
+}
+
+.notfound-card .btn-primary:hover {
+  background: #5a67d8;
+  border-color: #5a67d8;
+}

@@ -302,7 +302,7 @@ export default function OnboardingPage() {
                   Hủy
                 </button>
                 <button type="submit" className="btn-next">
-                  Tiếp tục →
+                  Tiếp tục
                 </button>
               </div>
             </form>
@@ -354,10 +354,10 @@ export default function OnboardingPage() {
 
             <div className="form-actions">
               <button type="button" className="btn-back" onClick={() => setStep(1)}>
-                ← Quay lại
+                Quay lại
               </button>
               <button type="button" className="btn-complete" onClick={handleStep2Submit}>
-                Tiếp tục thanh toán →
+                Tiếp tục thanh toán
               </button>
             </div>
           </div>

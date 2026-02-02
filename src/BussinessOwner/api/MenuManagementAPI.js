@@ -100,8 +100,8 @@ export const uploadMenuImage = async (imageFile) => {
   const token = localStorage.getItem("authToken");
 
   const formData = new FormData();
-  formData.append("file", imageFile);   // ✅ ĐÚNG TÊN
-  formData.append("folder", "menu");    // ✅ BẮT BUỘC
+  formData.append("file", imageFile);
+  formData.append("folder", "menu");
 
   const res = await fetch(
     `${BASE_URL}/api/v1/upload/image`,
@@ -109,7 +109,6 @@ export const uploadMenuImage = async (imageFile) => {
       method: "POST",
       headers: {
         Authorization: `Bearer ${token}`,
-        // ❌ KHÔNG set Content-Type
       },
       body: formData,
     }
@@ -121,4 +120,4 @@ export const uploadMenuImage = async (imageFile) => {
   }
 
   return res.json();
-}
+};

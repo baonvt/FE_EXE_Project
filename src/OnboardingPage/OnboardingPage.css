@@ -838,3 +838,93 @@
     flex-direction: column;
   }
 }
+
+.packages-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr); /* Ép buộc 3 cột */
+  gap: 24px; /* Khoảng cách giữa các gói */
+  width: 100%;
+  
+  /* QUAN TRỌNG: Tăng max-width lên để đủ chỗ cho 3 cột */
+  max-width: 1200px; 
+  margin: 0 auto;
+  
+  /* Thêm padding trên để badge không bị cắt mất nếu nó nhô lên */
+  padding-top: 20px; 
+}
+/* Responsive: Trên màn hình điện thoại thì tự động xếp dọc lại cho dễ đọc */
+@media (max-width: 768px) {
+  .packages-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.package-card {
+  position: relative;
+  border: 1px solid #e5e7eb;
+  border-radius: 16px; /* Bo góc mềm mại hơn */
+  padding: 32px 24px 24px; /* Tăng padding-top lên 32px hoặc 40px để tránh đụng badge */
+  background: white;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Badge Phổ biến nhất - Nằm giữa cạnh trên */
+.popular-badge {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%); /* Kỹ thuật canh giữa tuyệt đối và nhô lên 50% */
+  
+  background-color: #4f46e5; /* Màu tím */
+  color: white;
+  padding: 6px 16px;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  white-space: nowrap; /* Không cho xuống dòng */
+  box-shadow: 0 4px 6px rgba(79, 70, 229, 0.2);
+  z-index: 2;
+}
+/* Hiệu ứng khi hover */
+.package-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Style cho gói đang chọn */
+.package-card.selected {
+  border: 2px solid #4f46e5; /* Màu tím chủ đạo */
+  background-color: #f5f3ff;
+}
+
+/* Style cho gói phổ biến (Gói giữa) */
+.package-card.popular {
+  border-color: #4f46e5;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, 0.15);
+}
+
+.selected-badge {
+  position: absolute;
+  top: -10px; /* Nhô lên khỏi cạnh trên một chút */
+  right: -15px; /* Nhô ra khỏi cạnh phải một chút */
+  
+  background-color: #10b981; /* Màu xanh lá */
+  color: white;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  z-index: 3;
+}
+
+
+/* Tăng độ rộng để chứa đủ 3 gói hàng ngang */
+.step-content {
+  /* Cũ là 800px -> Tăng lên 1200px để 3 cột thoải mái */
+  max-width: 1200px; 
+  margin: 0 auto;
+  width: 100%;
+}
+

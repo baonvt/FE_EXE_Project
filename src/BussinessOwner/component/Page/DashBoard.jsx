@@ -260,7 +260,7 @@ useEffect(() => {
           </Card>
 
           {/* Top Products Section */}
-          <Card className="border-0 shadow-sm rounded-4">
+          {/* <Card className="border-0 shadow-sm rounded-4">
             <Card.Body>
               <h5 className="fw-bold mb-3">Top món bán chạy</h5>
               <Table hover responsive className="align-middle mb-0">
@@ -286,7 +286,7 @@ useEffect(() => {
                 </tbody>
               </Table>
             </Card.Body>
-          </Card>
+          </Card> */}
         </Col>
 
         {/* Right Column: Order Queue */}

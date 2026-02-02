@@ -97,24 +97,39 @@ export default function MenuManagement() {
     }
   };
 
-  const fetchMenus = async () => {
-    try {
-      const res = await getMenuAll();
-      const list = res.data || res;
-      if (Array.isArray(list)) {
-        setMenus(list.map(m => ({
-          id: m.id,
-          name: m.name,
-          price: m.price,
-          category: m.category_id?.toString(),
-          image: m.image_url || "https://placehold.co/300x200?text=No+Image",
-          tags: m.tags || "",
-        })));
-      }
-    } catch (error) {
-      console.error("Lỗi tải thực đơn:", error);
+const fetchMenus = async () => {
+  try {
+    const res = await getMenuAll();
+    const list = res.data || res;
+
+    if (Array.isArray(list)) {
+      setMenus(
+        list.map((m) => {
+          let imagePath = m.image || "";
+
+          // 🔥 GHÉP DOMAIN Ở ĐÂY
+          if (imagePath.startsWith("/")) {
+            imagePath = `https://apiqrcodeexe201-production.up.railway.app${imagePath}`;
+          }
+
+          return {
+            id: m.id,
+            name: m.name,
+            price: m.price,
+            category: m.category_id?.toString(),
+            image:
+              imagePath ||
+              "https://placehold.co/300x200?text=No+Image",
+            tags: m.tags || "",
+          };
+        })
+      );
     }
-  };
+  } catch (error) {
+    console.error("Lỗi tải thực đơn:", error);
+  }
+};
+
 
   useEffect(() => {
     fetchCategories();

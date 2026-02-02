@@ -7,12 +7,29 @@ const getAuthHeaders = () => {
   };
 };
 export const getOrderDetail = async (tableId) => {
-  const res = await fetch(`${BASE_URL}/api/v1/orders/${tableId}`, {
+  const res = await fetch(`${BASE_URL}/api/v1/tables/${tableId}/detail`, {
     headers: getAuthHeaders(),
   });
-    if (!res.ok) {
+
+  if (!res.ok) {
     const err = await res.text();
     throw new Error(err || "Lấy chi tiết đơn hàng thất bại");
-    }
-    return res.json();
+  }
+
+  const json = await res.json();
+
+  return json.data; // ⬅️ trả về full data
+};
+
+export const updateOrderStatus = async (tableId, status) => {
+  const res = await fetch(`${BASE_URL}/api/v1/tables/${tableId}/detail`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || "Cập nhật trạng thái đơn hàng thất bại");
+  }
+  return res.json();;
 };
