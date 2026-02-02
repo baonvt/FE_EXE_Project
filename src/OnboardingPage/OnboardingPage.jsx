@@ -159,7 +159,15 @@ export default function OnboardingPage() {
       const data = await resp.json();
 
       if (!resp.ok) {
-        throw new Error(data.message || 'Không thể tạo đăng ký');
+        // Kiểm tra lỗi email đã tồn tại
+        const errorMsg = data.message || 'Không thể tạo đăng ký';
+        if (errorMsg.includes('EMAIL_EXISTS') || errorMsg.includes('Email đã được sử dụng')) {
+          showError('Email này đã được đăng ký. Vui lòng quay lại và sử dụng email khác.');
+          setError('Email đã được sử dụng. Vui lòng quay lại trang chủ và sử dụng email khác hoặc đăng nhập.');
+          setIsProcessing(false);
+          return;
+        }
+        throw new Error(errorMsg);
       }
 
       // Success
@@ -169,6 +177,7 @@ export default function OnboardingPage() {
     } catch (err) {
       console.error('Subscription error:', err);
       setError(err.message);
+      showError(err.message);
       setIsProcessing(false);
     }
   };

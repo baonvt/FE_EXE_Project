@@ -106,8 +106,11 @@ export default function MenuManagement() {
             let imagePath = m.image || "";
 
             // 🔥 GHÉP DOMAIN Ở ĐÂY
-            if (imagePath.startsWith("/")) {
+            if (imagePath && imagePath.startsWith("/")) {
               imagePath = `https://apiqrcodeexe201-production.up.railway.app${imagePath}`;
+            } else if (imagePath && !imagePath.startsWith("http")) {
+              // Nếu không phải URL và không bắt đầu bằng /, thêm domain
+              imagePath = `https://apiqrcodeexe201-production.up.railway.app/${imagePath}`;
             }
 
             return {
@@ -116,8 +119,7 @@ export default function MenuManagement() {
               price: m.price,
               category: m.category_id?.toString(),
               image:
-                imagePath ||
-                "https://placehold.co/300x200?text=No+Image",
+                imagePath || "https://placehold.co/300x200?text=No+Image",
               tags: m.tags || "",
             };
           })

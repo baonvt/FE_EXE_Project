@@ -64,6 +64,13 @@ export default function LandingPage() {
       return;
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(registerForm.email)) {
+      setError('Email không hợp lệ');
+      return;
+    }
+
     if (registerForm.password !== registerForm.confirmPassword) {
       setError('Mật khẩu xác nhận không khớp');
       return;
@@ -74,8 +81,33 @@ export default function LandingPage() {
       return;
     }
 
-    // For now: only validate and save data locally, then proceed to onboarding.
-    // The actual API register call will be performed inside the onboarding flow.
+    // Check if email already exists
+    try {
+      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const resp = await fetch(`${API_URL}/api/v1/auth/check-email`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: registerForm.email })
+      });
+
+      const data = await resp.json();
+
+      if (!resp.ok) {
+        if (data.code === 'EMAIL_EXISTS') {
+          setError('Email này đã được đăng ký. Vui lòng sử dụng email khác hoặc đăng nhập.');
+          showToast('Email đã tồn tại trong hệ thống', 'error');
+        } else {
+          setError(data.message || 'Không thể kiểm tra email');
+        }
+        return;
+      }
+    } catch (err) {
+      console.error('Check email error:', err);
+      setError('Không thể kết nối đến server. Vui lòng thử lại.');
+      return;
+    }
+
+    // Email is available, proceed to onboarding
     showToast('Tiếp tục bước onboarding để hoàn tất đăng ký', 'info');
     setShowRegisterModal(false);
     navigate('/onboarding', { state: { registerData: registerForm } });

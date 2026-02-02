@@ -33,7 +33,7 @@ export const getTableOrders = async () => {
 
 export const createTableOrder = async (tableData) => {
   const restaurantId = getRestaurantId();
-  if (!restaurantId) throw new Error("Missing restaurantId");
+  if (!restaurantId) throw new Error("Không tìm thấy Restaurant ID. Vui lòng đăng nhập lại.");
 
   const res = await fetch(
     `${BASE_URL}/api/v1/restaurants/${restaurantId}/tables`,
@@ -45,8 +45,16 @@ export const createTableOrder = async (tableData) => {
   );
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err || "Tạo bàn mới thất bại");
+    // Thử parse JSON trước, nếu không được thì lấy text
+    let errorMessage = "Tạo bàn mới thất bại";
+    try {
+      const errorData = await res.json();
+      errorMessage = errorData.message || errorData.error || errorMessage;
+    } catch {
+      const errText = await res.text();
+      if (errText) errorMessage = errText;
+    }
+    throw new Error(errorMessage);
   }
 
   return res.json();

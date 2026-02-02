@@ -55,14 +55,33 @@ export default function SettingsManagement() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                // Lấy restaurant ID từ localStorage hoặc context
-                const storedRestaurantId = localStorage.getItem("restaurant_id");
+                // Lấy restaurant ID từ localStorage, token hoặc context
+                let storedRestaurantId = localStorage.getItem("restaurant_id");
+                
+                // Nếu không có trong localStorage, thử lấy từ token
+                if (!storedRestaurantId) {
+                    const token = localStorage.getItem("authToken");
+                    if (token) {
+                        try {
+                            const payload = JSON.parse(atob(token.split('.')[1]));
+                            storedRestaurantId = payload.restaurant_id;
+                            if (storedRestaurantId) {
+                                localStorage.setItem("restaurant_id", storedRestaurantId);
+                            }
+                        } catch (e) {
+                            console.error("Lỗi decode token:", e);
+                        }
+                    }
+                }
+                
                 if (storedRestaurantId) {
                     setRestaurantId(parseInt(storedRestaurantId));
                     await Promise.all([
                         fetchBankSettings(storedRestaurantId),
                         fetchPackageInfo(storedRestaurantId),
                     ]);
+                } else {
+                    console.error("Không tìm thấy restaurant_id");
                 }
             } catch (error) {
                 console.error("Lỗi tải dữ liệu:", error);

@@ -55,8 +55,9 @@ useEffect(() => {
         phone: data.phone || "",
         role: data.role || "",
         avatar: data.avatar || "",
-        restaurant: data.restaurantName || "",
+        restaurant: data.restaurantName || data.name || "",
         address: data.address || "",
+        restaurantId: data.restaurantId || data.id || null,
       });
     } catch (err) {
       console.error("Profile API lỗi:", err);
