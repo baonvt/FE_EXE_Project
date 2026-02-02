@@ -24,7 +24,7 @@ export default function Sidebar() {
             />
             <UtensilsCrossed size={24} className="fallback-logo text-primary" />
           </div>
-          <span className="brand-name">Foodie POS</span>
+          <span className="brand-name">FB-Manager</span>
         </div>
 
         {/* Menu */}
