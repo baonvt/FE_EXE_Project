@@ -149,22 +149,40 @@ export default function OrderManagement() {
   };
 
   // --- HANDLERS ---
-  const handleCreate = async () => {
-    const nextNumber = tables.length + 1;
-    const newTable = {
-      name: `Bàn ${createForm.table_number || nextNumber}`,
-      capacity: parseInt(createForm.capacity),
-      table_number: parseInt(createForm.table_number) || nextNumber,
-    };
-    try {
-      await createTableOrder(newTable);
-      fetchTables();
-      setShowCreateModal(false);
-      setCreateForm({ capacity: 4, name: "", table_number: "" });
-    } catch (error) {
-      alert("Lỗi khi tạo bàn");
-    }
+ const handleCreate = async () => {
+  const tableNumber = Number(createForm.table_number);
+
+  if (!tableNumber) {
+    alert("Vui lòng nhập số bàn");
+    return;
+  }
+
+  // check trùng ở frontend
+  const isDuplicate = tables.some(
+    (t) => t.table_number === tableNumber
+  );
+
+  if (isDuplicate) {
+    alert("Số bàn đã tồn tại");
+    return;
+  }
+
+  const newTable = {
+    name: `Bàn ${tableNumber}`,
+    capacity: Number(createForm.capacity),
+    table_number: tableNumber,
   };
+
+  try {
+    await createTableOrder(newTable);
+    await fetchTables();
+    setShowCreateModal(false);
+    setCreateForm({ capacity: 4, name: "", table_number: "" });
+  } catch (error) {
+    alert(error.message);
+  }
+};
+
 
   const handleDelete = async () => {
     try {
@@ -503,7 +521,7 @@ export default function OrderManagement() {
                           : "primary"
                       }
                       className="w-100 rounded-pill fw-bold py-2"
-                      onClick={() => navigate(`/orders/table/${table.id}`)}
+                      onClick={() => navigate(`table/${table.id}`)}
                     >
                       {table.status === "empty"
                         ? "Bắt đầu gọi món"
