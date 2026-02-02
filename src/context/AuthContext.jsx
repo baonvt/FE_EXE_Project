@@ -97,13 +97,22 @@ export const AuthProvider = ({ children }) => {
       // Cập nhật State
       setToken(receivedToken);
 
+      // Lưu restaurant_id nếu có
+      const restaurantId = data?.restaurant_id || data?.data?.restaurant_id || null;
+      if (restaurantId) {
+        localStorage.setItem('restaurant_id', restaurantId);
+      }
+
       if (userFromBody) {
         const { password: _, ...cleanUser } = userFromBody;
         // Map role nếu server trả về khác chuẩn
         if (cleanUser.role === 'restaurant') cleanUser.role = USER_ROLES.RESTAURANT_OWNER;
         
+        // Thêm restaurant_id vào user object
+        cleanUser.restaurant_id = restaurantId;
+        
         setCurrentUser(cleanUser);
-        return { success: true, user: cleanUser };
+        return { success: true, user: cleanUser, restaurant_id: restaurantId };
       }
 
       // Nếu chỉ có token mà không có user info, tạm thời set user ảo dựa trên email

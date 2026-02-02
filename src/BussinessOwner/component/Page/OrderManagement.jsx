@@ -25,6 +25,7 @@ import {
   Clock,
   LayoutGrid,
   QrCode,
+  MoreVertical,
 } from "lucide-react";
 import {
   getTableOrders,

@@ -83,7 +83,7 @@ export default function LandingPage() {
 
     // Check if email already exists
     try {
-      const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+      const API_URL = import.meta.env.VITE_API_URL || 'https://apiqrcodeexe201-production.up.railway.app';
       const resp = await fetch(`${API_URL}/api/v1/auth/check-email`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
