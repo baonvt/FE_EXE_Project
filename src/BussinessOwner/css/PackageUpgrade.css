@@ -1,0 +1,246 @@
+.package-upgrade {
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.current-package-card {
+  margin-bottom: 2rem;
+  background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+  border: 2px solid #667eea;
+}
+
+.current-package-card h3 {
+  margin: 0 0 1rem 0;
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #666;
+  letter-spacing: 1px;
+}
+
+.current-package-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.current-package-info .package-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.current-package-info .package-price {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.packages-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 1.5rem;
+}
+
+.package-card {
+  position: relative;
+  text-align: center;
+  transition: all 0.3s ease;
+}
+
+.package-card.popular {
+  border: 2px solid #667eea;
+  transform: scale(1.05);
+}
+
+.package-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+}
+
+.popular-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #667eea;
+  color: white;
+  padding: 0.35rem 1rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+}
+
+.package-card .package-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin: 0 0 1rem 0;
+  color: #333;
+}
+
+.package-price-large {
+  font-size: 2.5rem;
+  font-weight: 700;
+  color: #667eea;
+  margin-bottom: 1.5rem;
+}
+
+.price-period {
+  font-size: 1rem;
+  color: #999;
+  font-weight: 400;
+}
+
+.package-features {
+  list-style: none;
+  padding: 0;
+  margin: 0 0 2rem 0;
+  text-align: left;
+}
+
+.package-features li {
+  padding: 0.75rem 0;
+  border-bottom: 1px solid #f0f0f0;
+  color: #666;
+  font-size: 0.9375rem;
+}
+
+.package-features li:last-child {
+  border-bottom: none;
+}
+
+.package-features li:before {
+  content: '✓';
+  color: #4caf50;
+  font-weight: 700;
+  margin-right: 0.75rem;
+}
+
+.upgrade-btn {
+  width: 100%;
+}
+
+/* Payment Modal */
+.payment-modal-content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.payment-summary {
+  padding: 1rem;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.payment-summary h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.summary-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem 0;
+  font-size: 0.9375rem;
+}
+
+.payment-methods h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1rem;
+  font-weight: 700;
+}
+
+.payment-method-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.payment-method-card {
+  padding: 1.5rem;
+  border: 2px solid #e8e8e8;
+  border-radius: 12px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.payment-method-card:hover {
+  border-color: #667eea;
+  background: #f8f9ff;
+}
+
+.payment-method-card.selected {
+  border-color: #667eea;
+  background: linear-gradient(135deg, #667eea10 0%, #764ba210 100%);
+}
+
+.payment-method-logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #0066cc;
+  margin-bottom: 0.5rem;
+}
+
+.payment-method-logo.momo {
+  color: #d82d8b;
+}
+
+.payment-method-card p {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+.payment-note {
+  padding: 1rem;
+  background: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 8px;
+  text-align: center;
+}
+
+.payment-note p {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  color: #856404;
+}
+
+.payment-note small {
+  color: #856404;
+  font-size: 0.8125rem;
+}
+
+.modal-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 1px solid #e8e8e8;
+}
+
+.modal-actions button {
+  min-width: 120px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .package-upgrade {
+    padding: 1rem;
+  }
+
+  .packages-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .package-card.popular {
+    transform: scale(1);
+  }
+
+  .payment-method-grid {
+    grid-template-columns: 1fr;
+  }
+}
+

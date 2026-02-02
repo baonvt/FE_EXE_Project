@@ -1,0 +1,198 @@
+.payment-settings {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.settings-header {
+  margin-bottom: 2rem;
+  padding-bottom: 1.5rem;
+  border-bottom: 2px solid #f0f0f0;
+}
+
+.settings-header h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.settings-header p {
+  margin: 0;
+  color: #666;
+  font-size: 1rem;
+}
+
+.settings-form {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.form-section h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+
+.section-desc {
+  margin: 0;
+  color: #666;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+}
+
+.qr-upload-section {
+  display: flex;
+  gap: 2rem;
+  align-items: flex-start;
+}
+
+.qr-preview {
+  flex-shrink: 0;
+  background: white;
+  border: 2px dashed #e0e0e0;
+  border-radius: 12px;
+  padding: 1rem;
+  width: 280px;
+  height: 280px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qr-preview img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+.qr-placeholder {
+  text-align: center;
+  color: #999;
+}
+
+.qr-placeholder span {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.qr-placeholder p {
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.upload-controls {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  align-items: flex-start;
+}
+
+.upload-controls label {
+  cursor: pointer;
+}
+
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.form-group label {
+  font-weight: 700;
+  color: #1a1a1a;
+  font-size: 0.9375rem;
+}
+
+.form-group input {
+  padding: 0.875rem 1.125rem;
+  border: 2px solid #e8ebf0;
+  border-radius: 10px;
+  font-size: 0.9375rem;
+  font-family: inherit;
+  transition: all 0.3s;
+  background: #fafbfc;
+}
+
+.form-group input:hover {
+  border-color: #d0d4dd;
+  background: white;
+}
+
+.form-group input:focus {
+  outline: none;
+  border-color: #667eea;
+  background: white;
+  box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 1rem;
+  border-top: 2px solid #f0f0f0;
+}
+
+.settings-note {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #f8f9ff 0%, #f0f4ff 100%);
+  border: 2px solid #e0e7ff;
+  border-radius: 12px;
+}
+
+.settings-note h4 {
+  margin: 0 0 1rem 0;
+  font-size: 1.125rem;
+  font-weight: 700;
+  color: #667eea;
+}
+
+.settings-note ol {
+  margin: 0;
+  padding-left: 1.5rem;
+  color: #666;
+}
+
+.settings-note li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .qr-upload-section {
+    flex-direction: column;
+  }
+
+  .qr-preview {
+    width: 100%;
+    max-width: 280px;
+    margin: 0 auto;
+  }
+
+  .upload-controls {
+    width: 100%;
+  }
+
+  .upload-controls .btn {
+    width: 100%;
+  }
+
+  .form-actions {
+    flex-direction: column;
+  }
+
+  .form-actions .btn {
+    width: 100%;
+  }
+}
+
