@@ -20,11 +20,10 @@ import { ShoppingCart, Plus, Minus, UtensilsCrossed, Search } from "lucide-react
 import { CustomerProvider, useCustomer } from "../context/CustomerContext";
 import {
   getRestaurantBySlug,
-  getTableByNumber,
-  getCategories,
-  getMenuItems,
+  getTableBySlugAndNumber,
+  getMenuBySlug,
   getMenuItemById,
-  createOrder,
+  createOrderBySlug,
   getPublicMenu,
   getPublicCategories,
 } from "../api/CustomerAPI";
@@ -101,34 +100,41 @@ function CustomerMenuContent() {
   }, [restaurantSlug]);
 
   useEffect(() => {
-    if (!restaurant || !tableNumber) return;
-    const rid = restaurant.id ?? restaurant.restaurant_id;
-    const isDemo = restaurant.slug === "demo";
+    if (!restaurantSlug || !tableNumber) return;
+    const isDemo = restaurantSlug === "demo";
     let cancelled = false;
     (async () => {
       if (!isDemo) setLoading(true);
       try {
-        const res = await getTableByNumber(rid, tableNumber);
+        // Sử dụng API mới: lấy table theo slug và số bàn
+        const res = await getTableBySlugAndNumber(restaurantSlug, tableNumber);
         if (cancelled) return;
         const t = res?.data ?? res ?? res?.table;
         if (!t) {
           if (!isDemo) setNotFound(true);
           else {
-            const demoTable = { id: 1, number: tableNumber, name: `Bàn ${tableNumber}` };
+            const demoRestaurant = { id: 1, restaurant_id: 1, name: "Nhà hàng Demo", slug: "demo" };
+            const demoTable = { id: 1, table_number: tableNumber, name: `Bàn ${tableNumber}` };
+            setRestaurant(demoRestaurant);
             setTable(demoTable);
-            initSession(restaurant, demoTable);
+            initSession(demoRestaurant, demoTable);
           }
           if (!cancelled) setLoading(false);
           return;
         }
+        // API trả về cả restaurant info trong response
+        const r = t.restaurant ?? restaurant ?? { id: t.restaurant_id };
+        if (r) setRestaurant(r);
         setTable(t);
-        initSession(restaurant, t);
+        initSession(r, t);
       } catch (e) {
         if (cancelled) return;
         if (isDemo) {
-          const demoTable = { id: 1, number: tableNumber, name: `Bàn ${tableNumber}` };
+          const demoRestaurant = { id: 1, restaurant_id: 1, name: "Nhà hàng Demo", slug: "demo" };
+          const demoTable = { id: 1, table_number: tableNumber, name: `Bàn ${tableNumber}` };
+          setRestaurant(demoRestaurant);
           setTable(demoTable);
-          initSession(restaurant, demoTable);
+          initSession(demoRestaurant, demoTable);
         } else {
           setNotFound(true);
         }
@@ -137,44 +143,78 @@ function CustomerMenuContent() {
       }
     })();
     return () => { cancelled = true; };
-  }, [restaurant, tableNumber, initSession]);
+  }, [restaurantSlug, tableNumber, initSession]);
 
   useEffect(() => {
-    if (!restaurantId) return;
-    const rid = restaurantId;
+    if (!restaurantSlug || !restaurantId) return;
     let cancelled = false;
     (async () => {
       try {
-        let catList = [];
-        let menuList = [];
-        try {
-          catList = await getCategories(rid);
-          menuList = await getMenuItems(rid);
-        } catch (_) {
-          const [c, m] = await Promise.all([getPublicCategories(rid), getPublicMenu(rid)]);
-          catList = Array.isArray(c) ? c : (c?.data ?? []);
-          menuList = Array.isArray(m) ? m : (m?.data ?? []);
-        }
+        // Sử dụng API mới: lấy menu theo slug
+        const menuData = await getMenuBySlug(restaurantSlug);
         if (cancelled) return;
-        setCategories(Array.isArray(catList) ? catList : []);
-        setMenu(
-          (Array.isArray(menuList) ? menuList : []).map((m) => ({
-            id: m.id,
-            name: m.name,
-            price: m.price,
-            description: m.description ?? m.desc ?? "",
-            category_id: m.category_id ?? m.categoryId,
-            image: m.image_url ?? m.image ?? "https://placehold.co/400x300?text=Món+ăn",
-            badge: m.badge ?? m.tags ?? "",
-          }))
-        );
+        
+        // API trả về { restaurant, menu: [{ id, name, items: [...] }] }
+        const menuCategories = menuData?.menu ?? menuData ?? [];
+        
+        // Lấy danh sách categories
+        const catList = Array.isArray(menuCategories) 
+          ? menuCategories.map(cat => ({ id: cat.id, name: cat.name, description: cat.description, image: cat.image }))
+          : [];
+        
+        // Flatten items từ tất cả categories
+        const menuItems = [];
+        if (Array.isArray(menuCategories)) {
+          menuCategories.forEach(cat => {
+            if (Array.isArray(cat.items)) {
+              cat.items.forEach(item => {
+                menuItems.push({
+                  id: item.id,
+                  name: item.name,
+                  price: item.price,
+                  description: item.description ?? "",
+                  category_id: cat.id,
+                  image: item.image ?? "https://placehold.co/400x300?text=Món+ăn",
+                  badge: item.tags ?? "",
+                  options: item.options,
+                });
+              });
+            }
+          });
+        }
+        
+        setCategories(catList);
+        setMenu(menuItems);
       } catch (e) {
-        if (!cancelled) setMenu([]);
-        setCategories([]);
+        // Fallback sang API cũ nếu API mới không hoạt động
+        try {
+          const [c, m] = await Promise.all([getPublicCategories(restaurantId), getPublicMenu(restaurantId)]);
+          const catList = Array.isArray(c) ? c : (c?.data ?? []);
+          const menuList = Array.isArray(m) ? m : (m?.data ?? []);
+          if (!cancelled) {
+            setCategories(Array.isArray(catList) ? catList : []);
+            setMenu(
+              (Array.isArray(menuList) ? menuList : []).map((m) => ({
+                id: m.id,
+                name: m.name,
+                price: m.price,
+                description: m.description ?? m.desc ?? "",
+                category_id: m.category_id ?? m.categoryId,
+                image: m.image_url ?? m.image ?? "https://placehold.co/400x300?text=Món+ăn",
+                badge: m.badge ?? m.tags ?? "",
+              }))
+            );
+          }
+        } catch (_) {
+          if (!cancelled) {
+            setMenu([]);
+            setCategories([]);
+          }
+        }
       }
     })();
     return () => { cancelled = true; };
-  }, [restaurantId]);
+  }, [restaurantSlug, restaurantId]);
 
   const openItemModal = useCallback(async (item) => {
     setSelectedItem(item);
@@ -220,21 +260,21 @@ function CustomerMenuContent() {
     }
     setSubmitting(true);
     try {
+      // Payload theo format API backend mới
       const payload = {
-        restaurantId: Number(restaurantId),
-        tableId: Number(tableId),
-        tableNumber: String(ctxTableNumber || tableNumber),
-        customerName: customerName.trim() || undefined,
-        customerPhone: customerPhone.trim() || undefined,
-        customerNote: customerNote.trim() || undefined,
+        table_number: Number(ctxTableNumber || tableNumber),
+        payment_method: "cash", // Mặc định thanh toán tiền mặt
+        customer_name: customerName.trim() || "",
+        customer_phone: customerPhone.trim() || "",
+        notes: customerNote.trim() || "",
         items: cart.map((i) => ({
-          menuItemId: Number(i.id),
+          menu_item_id: Number(i.id),
           quantity: Number(i.quantity),
-          specialRequest: (i.specialRequest || "").trim() || undefined,
+          notes: (i.specialRequest || "").trim() || "",
         })),
-        paymentTiming: "after",
       };
-      const res = await createOrder(payload);
+      // Sử dụng API mới: tạo order theo slug
+      const res = await createOrderBySlug(restaurantSlug, payload);
       const order = res?.data ?? res;
       const id = order?.id ?? order?.orderId ?? order?.order_id;
       if (id) {
@@ -247,9 +287,10 @@ function CustomerMenuContent() {
         showToast("Đơn đã gửi. Chờ xác nhận.", "info");
       }
     } catch (err) {
-      clearCart();
-      setShowCart(false);
-      showToast("Đơn đã ghi nhận (chế độ demo — chưa có API backend).", "info");
+      console.error("Order error:", err);
+      // Hiển thị lỗi cụ thể nếu có
+      const errorMsg = err?.message || "Có lỗi xảy ra khi đặt món";
+      showToast(errorMsg, "error");
     } finally {
       setSubmitting(false);
     }

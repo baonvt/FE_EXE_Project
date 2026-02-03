@@ -10,15 +10,27 @@ const api = (path, options = {}) =>
     return data;
   });
 
+// Lấy nhà hàng theo slug (Public API)
 export const getRestaurantBySlug = async (slug) => {
   try {
-    const data = await api(`/api/v1/restaurants/by-slug/${encodeURIComponent(slug)}`);
+    const data = await api(`/api/v1/public/restaurants/${encodeURIComponent(slug)}`);
     return data?.data ?? data;
   } catch (e) {
     throw e;
   }
 };
 
+// Lấy thông tin bàn theo slug nhà hàng và số bàn (Public API)
+export const getTableBySlugAndNumber = async (slug, tableNumber) => {
+  try {
+    const data = await api(`/api/v1/public/restaurants/${encodeURIComponent(slug)}/tables/${tableNumber}`);
+    return data?.data ?? data;
+  } catch (e) {
+    throw e;
+  }
+};
+
+// [Legacy] Lấy bàn theo restaurant ID và number - fallback
 export const getTableByNumber = async (restaurantId, tableNumber) => {
   const params = new URLSearchParams({ restaurantId: String(restaurantId), number: String(tableNumber) });
   const data = await api(`/api/v1/tables/by-number?${params}`);
@@ -44,6 +56,16 @@ export const getMenuItemById = async (id) => {
   return data?.data ?? data;
 };
 
+// Tạo đơn hàng theo slug nhà hàng (Public API)
+export const createOrderBySlug = async (slug, payload) => {
+  const data = await api(`/api/v1/public/restaurants/${encodeURIComponent(slug)}/orders`, {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
+  return data?.data ?? data;
+};
+
+// [Legacy] Tạo đơn hàng - fallback
 export const createOrder = async (payload) => {
   const data = await api("/api/v1/orders", {
     method: "POST",
@@ -52,12 +74,20 @@ export const createOrder = async (payload) => {
   return data?.data ?? data;
 };
 
+// Lấy menu đầy đủ theo slug (Public API) - bao gồm categories + items
+export const getMenuBySlug = async (slug) => {
+  const data = await api(`/api/v1/public/restaurants/${encodeURIComponent(slug)}/menu`);
+  return data?.data ?? data;
+};
+
+// [Legacy] Lấy menu public theo ID
 export const getPublicMenu = async (restaurantId) => {
   const data = await api(`/api/v1/restaurants/${restaurantId}/menu`);
   const list = data?.data ?? data;
   return Array.isArray(list) ? list : [];
 };
 
+// [Legacy] Lấy categories public theo ID
 export const getPublicCategories = async (restaurantId) => {
   const data = await api(`/api/v1/restaurants/${restaurantId}/categories`);
   const list = data?.data ?? data;

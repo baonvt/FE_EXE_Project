@@ -27,12 +27,17 @@ import {
   QrCode,
   MoreVertical,
   Users,
+  Power,
+  PowerOff,
+  AlertTriangle,
 } from "lucide-react";
 import {
   getTableOrders,
   createTableOrder,
   deleteTableOrder,
   updateTableOrder,
+  hardDeleteTable,
+  toggleTableActive,
 } from "../../api/OrderManagementAPI";
 
 // Cấu hình màu sắc trạng thái nâng cao
@@ -56,6 +61,12 @@ const statusConfig = {
     border: "#6366f1",
     icon: <Clock size={14} className="me-1" />,
   },
+  inactive: {
+    label: "Đã vô hiệu hóa",
+    color: "#6b7280",
+    bg: "#f3f4f6",
+    border: "#9ca3af",
+  },
 };
 
 export default function OrderManagement() {
@@ -78,6 +89,7 @@ export default function OrderManagement() {
 
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [tableToDelete, setTableToDelete] = useState(null);
+  const [deleteMode, setDeleteMode] = useState("soft"); // "soft" or "hard"
 
   const [showEditModal, setShowEditModal] = useState(false);
   const [tableToEdit, setTableToEdit] = useState(null);
@@ -111,24 +123,30 @@ export default function OrderManagement() {
       let tableList = response.data || response;
       if (!Array.isArray(tableList)) tableList = [];
 
-      const activeTables = tableList
-        .filter((table) => table.is_active === true)
-        .map((table) => {
-          const hasActiveOrder =
-            table.active_orders_count && table.active_orders_count > 0;
-
+      // Hiển thị TẤT CẢ bàn (cả active và inactive)
+      const allTables = tableList.map((table) => {
+        // Nếu bàn inactive thì status là "inactive"
+        if (table.is_active === false) {
           return {
             ...table,
-            status: hasActiveOrder
-              ? "serving"
-              : BACKEND_TO_FRONTEND_STATUS[table.status] || "empty",
+            status: "inactive",
           };
-        });
+        }
+        
+        const hasActiveOrder =
+          table.active_orders_count && table.active_orders_count > 0;
 
+        return {
+          ...table,
+          status: hasActiveOrder
+            ? "serving"
+            : BACKEND_TO_FRONTEND_STATUS[table.status] || "empty",
+        };
+      });
 
       // Sort tables by table_number numerically
-      activeTables.sort((a, b) => a.table_number - b.table_number);
-      setTables(activeTables);
+      allTables.sort((a, b) => a.table_number - b.table_number);
+      setTables(allTables);
     } catch (error) {
       console.error("Lỗi khi tải dữ liệu bàn:", error);
     }
@@ -142,12 +160,13 @@ export default function OrderManagement() {
     return matchStatus && matchSearch;
   });
 
-  // Thống kê nhanh (Đã thêm reserved)
+  // Thống kê nhanh (Đã thêm inactive)
   const stats = {
     total: tables.length,
     empty: tables.filter((t) => t.status === "empty").length,
     serving: tables.filter((t) => t.status === "serving").length,
     reserved: tables.filter((t) => t.status === "reserved").length,
+    inactive: tables.filter((t) => t.status === "inactive").length,
   };
 
   // --- HANDLERS ---
@@ -189,13 +208,28 @@ export default function OrderManagement() {
   const handleDelete = async () => {
     try {
       if (tableToDelete) {
-        await deleteTableOrder(tableToDelete.id);
+        if (deleteMode === "hard") {
+          await hardDeleteTable(tableToDelete.id);
+        } else {
+          await deleteTableOrder(tableToDelete.id);
+        }
         fetchTables();
         setShowDeleteConfirm(false);
         setTableToDelete(null);
+        setDeleteMode("soft");
       }
-    } catch {
-      alert("Lỗi khi xóa bàn");
+    } catch (err) {
+      alert(err.message || "Lỗi khi xóa bàn");
+    }
+  };
+
+  const handleToggleActive = async (table) => {
+    try {
+      const newActiveState = !table.is_active;
+      await toggleTableActive(table.id, newActiveState);
+      await fetchTables();
+    } catch (err) {
+      alert(err.message || "Lỗi khi cập nhật trạng thái bàn");
     }
   };
 
@@ -357,7 +391,8 @@ export default function OrderManagement() {
                   { key: "all", label: "Tất cả" },
                   { key: "empty", label: "Bàn trống" },
                   { key: "serving", label: "Đang phục vụ" },
-                  { key: "reserved", label: "Đã đặt trước" }, // Thêm tab lọc nếu muốn (option)
+                  { key: "reserved", label: "Đã đặt trước" },
+                  { key: "inactive", label: "Đã vô hiệu hóa" },
                 ].map((tab) => (
                   <Nav.Item key={tab.key}>
                     <Nav.Link
@@ -451,7 +486,7 @@ export default function OrderManagement() {
                         </Dropdown.Toggle>
                         <Dropdown.Menu
                           className="border-0 shadow-lg rounded-4 p-2"
-                          style={{ zIndex: 1050, minWidth: "200px" }}
+                          style={{ zIndex: 1050, minWidth: "220px" }}
                         >
                           <Dropdown.Item
                             onClick={() => {
@@ -469,7 +504,7 @@ export default function OrderManagement() {
                               setEditForm({
                                 name: table.name,
                                 capacity: table.capacity,
-                                status: table.status,
+                                status: table.status === "inactive" ? "empty" : table.status,
                               });
                               setShowEditModal(true);
                             }}
@@ -479,14 +514,43 @@ export default function OrderManagement() {
                             sửa
                           </Dropdown.Item>
                           <Dropdown.Divider className="my-1" />
+                          {/* Toggle Active/Inactive */}
+                          <Dropdown.Item
+                            onClick={() => handleToggleActive(table)}
+                            className="rounded-3 fw-medium py-2 mb-1"
+                          >
+                            {table.is_active !== false ? (
+                              <>
+                                <PowerOff size={16} className="me-2 text-warning" /> Vô hiệu hóa
+                              </>
+                            ) : (
+                              <>
+                                <Power size={16} className="me-2 text-success" /> Kích hoạt lại
+                              </>
+                            )}
+                          </Dropdown.Item>
+                          <Dropdown.Divider className="my-1" />
+                          {/* Soft Delete */}
                           <Dropdown.Item
                             onClick={() => {
                               setTableToDelete(table);
+                              setDeleteMode("soft");
                               setShowDeleteConfirm(true);
                             }}
-                            className="rounded-3 fw-medium py-2 text-danger bg-danger-subtle mt-1"
+                            className="rounded-3 fw-medium py-2 text-warning mb-1"
                           >
-                            <Trash2 size={16} className="me-2" /> Xóa bàn
+                            <PowerOff size={16} className="me-2" /> Ẩn bàn
+                          </Dropdown.Item>
+                          {/* Hard Delete */}
+                          <Dropdown.Item
+                            onClick={() => {
+                              setTableToDelete(table);
+                              setDeleteMode("hard");
+                              setShowDeleteConfirm(true);
+                            }}
+                            className="rounded-3 fw-medium py-2 text-danger bg-danger-subtle"
+                          >
+                            <Trash2 size={16} className="me-2" /> Xóa hoàn toàn
                           </Dropdown.Item>
                         </Dropdown.Menu>
                       </Dropdown>
@@ -649,37 +713,55 @@ export default function OrderManagement() {
       {/* 3. Modal Xóa */}
       <Modal
         show={showDeleteConfirm}
-        onHide={() => setShowDeleteConfirm(false)}
+        onHide={() => {
+          setShowDeleteConfirm(false);
+          setDeleteMode("soft");
+        }}
         centered
         size="sm"
         contentClassName="border-0 rounded-4 shadow-lg"
       >
         <Modal.Body className="text-center p-4">
           <div
-            className="bg-danger-subtle text-danger rounded-circle p-3 d-inline-flex mb-3 align-items-center justify-content-center"
+            className={`rounded-circle p-3 d-inline-flex mb-3 align-items-center justify-content-center ${
+              deleteMode === "hard" ? "bg-danger-subtle text-danger" : "bg-warning-subtle text-warning"
+            }`}
             style={{ width: 60, height: 60 }}
           >
-            <Trash2 size={28} />
+            {deleteMode === "hard" ? <Trash2 size={28} /> : <AlertTriangle size={28} />}
           </div>
-          <h5 className="fw-bold mb-2">Xóa bàn này?</h5>
+          <h5 className="fw-bold mb-2">
+            {deleteMode === "hard" ? "Xóa hoàn toàn bàn?" : "Ẩn bàn này?"}
+          </h5>
           <p className="text-muted small mb-4">
-            Bạn có chắc muốn xóa <strong>{tableToDelete?.name}</strong>? Dữ liệu
-            đơn hàng liên quan có thể bị ảnh hưởng.
+            {deleteMode === "hard" ? (
+              <>
+                Bạn có chắc muốn <strong className="text-danger">xóa hoàn toàn</strong>{" "}
+                <strong>{tableToDelete?.name}</strong>? Hành động này <strong>không thể hoàn tác</strong>.
+              </>
+            ) : (
+              <>
+                Bạn có chắc muốn ẩn <strong>{tableToDelete?.name}</strong>? Bàn sẽ bị vô hiệu hóa nhưng vẫn có thể kích hoạt lại.
+              </>
+            )}
           </p>
           <div className="d-flex gap-2">
             <Button
               variant="light"
               className="flex-fill rounded-pill fw-medium"
-              onClick={() => setShowDeleteConfirm(false)}
+              onClick={() => {
+                setShowDeleteConfirm(false);
+                setDeleteMode("soft");
+              }}
             >
-              Không
+              Hủy
             </Button>
             <Button
-              variant="danger"
+              variant={deleteMode === "hard" ? "danger" : "warning"}
               className="flex-fill rounded-pill fw-bold shadow-sm"
               onClick={handleDelete}
             >
-              Xóa ngay
+              {deleteMode === "hard" ? "Xóa hoàn toàn" : "Ẩn bàn"}
             </Button>
           </div>
         </Modal.Body>

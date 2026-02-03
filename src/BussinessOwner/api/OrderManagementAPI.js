@@ -75,11 +75,11 @@ export const updateTableOrder = async (tableId, tableData) => {
   return res.json();
 };
 
+// Soft delete (vô hiệu hóa bàn)
 export const deleteTableOrder = async (tableId) => {
   const res = await fetch(`${BASE_URL}/api/v1/tables/${tableId}`, {
     method: "DELETE",
     headers: getAuthHeaders(),
-    body: JSON.stringify({ is_active: false }), // soft delete
   });
 
   if (res.status === 404) {
@@ -98,5 +98,46 @@ export const deleteTableOrder = async (tableId) => {
   }
 
   return { success: true };
+};
+
+// Hard delete (xóa hoàn toàn bàn khỏi database)
+export const hardDeleteTable = async (tableId) => {
+  const res = await fetch(`${BASE_URL}/api/v1/tables/${tableId}?hard=true`, {
+    method: "DELETE",
+    headers: getAuthHeaders(),
+  });
+
+  if (res.status === 404) {
+    console.warn("Bàn không tồn tại");
+    return { success: true };
+  }
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || "Xóa hoàn toàn bàn thất bại");
+  }
+
+  const contentType = res.headers.get("content-type");
+  if (contentType && contentType.includes("application/json")) {
+    return res.json();
+  }
+
+  return { success: true };
+};
+
+// Toggle active/inactive
+export const toggleTableActive = async (tableId, isActive) => {
+  const res = await fetch(`${BASE_URL}/api/v1/tables/${tableId}`, {
+    method: "PUT",
+    headers: getAuthHeaders(),
+    body: JSON.stringify({ is_active: isActive }),
+  });
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || "Cập nhật trạng thái bàn thất bại");
+  }
+
+  return res.json();
 };
 
