@@ -381,18 +381,20 @@
   gap: 1.25rem;
   max-width: 1400px;
   margin: 0 auto;
-  overflow-x: auto;
+  align-items: stretch;
 }
 
 .pricing-card {
   flex: 1 1 0;
-  min-width: 240px;
+  min-width: 220px;
   background: white;
   border: 1px solid #e5e7eb;
   border-radius: 16px;
   padding: 1.5rem;
   position: relative;
   transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
 }
 
 .pricing-card:hover {
