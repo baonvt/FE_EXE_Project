@@ -97,10 +97,10 @@ export const AuthProvider = ({ children }) => {
       // Cập nhật State
       setToken(receivedToken);
 
-      // Lưu restaurant_id nếu có
-      const restaurantId = data?.restaurant_id || data?.data?.restaurant_id || null;
+      // Lưu restaurant_id nếu có (check cả root và nested trong data)
+      const restaurantId = data?.data?.restaurant_id || data?.restaurant_id || null;
       if (restaurantId) {
-        localStorage.setItem('restaurant_id', restaurantId);
+        localStorage.setItem('restaurant_id', String(restaurantId));
       }
 
       if (userFromBody) {

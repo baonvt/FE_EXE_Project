@@ -26,6 +26,7 @@ import {
   LayoutGrid,
   QrCode,
   MoreVertical,
+  Users,
 } from "lucide-react";
 import {
   getTableOrders,
