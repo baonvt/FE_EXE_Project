@@ -99,3 +99,9 @@ export const trackOrder = async (orderNumber) => {
   const data = await api(`/api/v1/public/orders/${encodeURIComponent(orderNumber)}/track`);
   return data?.data ?? data;
 };
+
+// Lấy VietQR thanh toán cho đơn hàng (Public API)
+export const getOrderPaymentQR = async (orderId) => {
+  const data = await api(`/api/v1/orders/${orderId}/payment-qr`);
+  return data?.data ?? data;
+};

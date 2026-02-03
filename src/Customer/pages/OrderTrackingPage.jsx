@@ -11,7 +11,7 @@ import {
     UtensilsCrossed,
     AlertCircle
 } from "lucide-react";
-import { trackOrder } from "../api/CustomerAPI";
+import { trackOrder, getOrderPaymentQR } from "../api/CustomerAPI";
 import "./OrderTracking.css";
 
 const STATUS_CONFIG = {
@@ -78,6 +78,8 @@ export default function OrderTrackingPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
     const [refreshing, setRefreshing] = useState(false);
+    const [paymentQR, setPaymentQR] = useState(null);
+    const [loadingQR, setLoadingQR] = useState(false);
 
     const fetchOrder = async () => {
         try {
@@ -220,12 +222,55 @@ export default function OrderTrackingPage() {
                             <Badge bg={paymentConfig.color}>{paymentConfig.label}</Badge>
                         </div>
                         {order.payment_status === "unpaid" && (
-                            <Alert variant="warning" className="mt-3 mb-0">
-                                <small>
-                                    <strong>Hướng dẫn:</strong> Vui lòng thanh toán bằng cách quét mã QR 
-                                    tại quầy hoặc gọi nhân viên để thanh toán.
-                                </small>
-                            </Alert>
+                            <>
+                                <Alert variant="warning" className="mt-3 mb-2">
+                                    <small>
+                                        <strong>Hướng dẫn:</strong> Quét mã QR bên dưới để thanh toán qua VietQR
+                                    </small>
+                                </Alert>
+                                <div className="text-center mt-3">
+                                    {!paymentQR ? (
+                                        <Button 
+                                            variant="primary" 
+                                            onClick={async () => {
+                                                setLoadingQR(true);
+                                                try {
+                                                    const res = await getOrderPaymentQR(order.id);
+                                                    setPaymentQR(res?.data || res);
+                                                } catch (err) {
+                                                    alert("Không thể tạo mã QR: " + (err.message || ""));
+                                                } finally {
+                                                    setLoadingQR(false);
+                                                }
+                                            }}
+                                            disabled={loadingQR}
+                                        >
+                                            {loadingQR ? (
+                                                <span className="spinner-border spinner-border-sm me-2"></span>
+                                            ) : (
+                                                <CreditCard size={18} className="me-2" />
+                                            )}
+                                            Hiển thị mã QR thanh toán
+                                        </Button>
+                                    ) : (
+                                        <div>
+                                            <img 
+                                                src={paymentQR.qr_url} 
+                                                alt="VietQR Payment" 
+                                                className="img-fluid mb-3"
+                                                style={{ maxWidth: "300px", border: "1px solid #dee2e6", borderRadius: "8px" }}
+                                            />
+                                            <div className="small text-muted">
+                                                <div><strong>Ngân hàng:</strong> {paymentQR.bank_name || paymentQR.bank_code}</div>
+                                                <div><strong>Số TK:</strong> {paymentQR.account_number}</div>
+                                                <div><strong>Chủ TK:</strong> {paymentQR.account_name}</div>
+                                                <div><strong>Số tiền:</strong> {formatCurrency(paymentQR.total_amount)}</div>
+                                                <div><strong>Nội dung:</strong> {paymentQR.description}</div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </>
                         )}
                     </Card.Body>
                 </Card>
