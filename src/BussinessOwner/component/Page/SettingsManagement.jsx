@@ -529,7 +529,11 @@ export default function SettingsManagement() {
             {/* Upgrade Modal */}
             <Modal 
                 show={showUpgradeModal} 
-                onHide={() => !upgradeLoading && !checkingPayment && setShowUpgradeModal(false)}
+                onHide={() => {
+                    setShowUpgradeModal(false);
+                    setUpgradeData(null);
+                    setCheckingPayment(false);
+                }}
                 centered
                 size="lg"
             >

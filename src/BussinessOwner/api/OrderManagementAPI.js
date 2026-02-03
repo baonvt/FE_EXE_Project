@@ -141,3 +141,20 @@ export const toggleTableActive = async (tableId, isActive) => {
   return res.json();
 };
 
+// Xác nhận đã nhận tiền từ khách (order_payment_status = paid)
+export const confirmOrderPayment = async (orderId) => {
+  const res = await fetch(
+    `${BASE_URL}/api/v1/orders/${orderId}/confirm-payment`,
+    {
+      method: "PUT",
+      headers: getAuthHeaders(),
+    }
+  );
+
+  if (!res.ok) {
+    const err = await res.text();
+    throw new Error(err || "Xác nhận thanh toán thất bại");
+  }
+
+  return res.json();
+};

@@ -104,8 +104,8 @@ export default function OrderTrackingPage() {
         }
         fetchOrder();
 
-        // Auto refresh every 30 seconds
-        const interval = setInterval(fetchOrder, 30000);
+        // Auto refresh every 5 seconds for faster updates
+        const interval = setInterval(fetchOrder, 5000);
         return () => clearInterval(interval);
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [orderNumber]);

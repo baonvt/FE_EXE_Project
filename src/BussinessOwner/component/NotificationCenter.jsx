@@ -210,23 +210,6 @@ const NotificationCenter = () => {
                                         <div className="notification-time">
                                             {formatTimeAgo(notification.created_at)}
                                         </div>
-                                        {/* Nút xác nhận thanh toán cho đơn mới */}
-                                        {(notification.type === "new_order" || notification.type === "payment_pending") && 
-                                         notification.data?.order_id && (
-                                            <button
-                                                className="btn btn-sm btn-success mt-2"
-                                                onClick={(e) => handleConfirmPayment(e, notification)}
-                                                disabled={confirmingOrderId === notification.data.order_id}
-                                                title="Nhấn khi đã nhận được tiền từ khách hàng"
-                                            >
-                                                {confirmingOrderId === notification.data.order_id ? (
-                                                    <span className="spinner-border spinner-border-sm me-1"></span>
-                                                ) : (
-                                                    <i className="bi bi-check-circle me-1"></i>
-                                                )}
-                                                Xác nhận đã nhận tiền
-                                            </button>
-                                        )}
                                     </div>
                                     <button
                                         className="notification-delete"
