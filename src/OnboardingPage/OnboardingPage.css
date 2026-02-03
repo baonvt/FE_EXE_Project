@@ -192,14 +192,16 @@
 /* Packages Grid */
 .packages-grid {
   display: flex;
-  flex-wrap: wrap;
-  gap: 1.5rem;
+  flex-wrap: nowrap;
+  gap: 1rem;
   margin-bottom: 2rem;
+  overflow-x: auto;
 }
 
 .packages-grid .package-card {
-  flex: 1 1 calc(33.333% - 1rem);
-  min-width: 280px;
+  flex: 1 1 0;
+  min-width: 220px;
+  max-width: 280px;
 }
 
 .package-card {

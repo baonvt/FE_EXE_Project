@@ -5,9 +5,34 @@ export const PricingContext = createContext();
 // Default packages fallback
 const defaultPackages = [
   {
+    id: 0,
+    name: 'Starter',
+    displayName: 'Starter',
+    monthlyPrice: 0,
+    yearlyPrice: 0,
+    description: 'Dùng thử miễn phí',
+    targetAudience: 'Người mới bắt đầu, muốn trải nghiệm hệ thống',
+    features: [
+      'Quản lý 10 món ăn',
+      'Tối đa 3 bàn',
+      'Đặt món qua QR',
+      'Thanh toán tiền mặt'
+    ],
+    limits: {
+      menuItems: 10,
+      maxMenuItems: 10,
+      tables: 3,
+      maxTables: 3,
+      categories: 2,
+      maxCategories: 2
+    },
+    popular: false,
+    active: true
+  },
+  {
     id: 1,
     name: 'Basic',
-    displayName: 'Gói Cơ Bản',
+    displayName: 'Basic',
     monthlyPrice: 229000,
     yearlyPrice: 2290000,
     description: 'Dành cho quán nhỏ, phục vụ dưới 40 khách/lượt',
@@ -34,7 +59,7 @@ const defaultPackages = [
   {
     id: 2,
     name: 'Pro',
-    displayName: 'Gói Chuyên Nghiệp',
+    displayName: 'Pro',
     monthlyPrice: 270000,
     yearlyPrice: 2700000,
     description: 'Dành cho quán cà phê và nhà hàng đang phát triển',
@@ -63,7 +88,7 @@ const defaultPackages = [
   {
     id: 3,
     name: 'Premium',
-    displayName: 'Gói Cao Cấp',
+    displayName: 'Premium',
     monthlyPrice: 279000,
     yearlyPrice: 2790000,
     description: 'Dành cho chuỗi hoặc nhà hàng có nhiều chi nhánh',

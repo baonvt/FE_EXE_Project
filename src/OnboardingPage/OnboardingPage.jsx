@@ -447,7 +447,7 @@ export default function OnboardingPage() {
                   )}
                   <ul className="package-features">
                     {pkg.features.map((feature, idx) => (
-                      <li key={idx}>{feature}</li>
+                      <li key={idx}>{feature.replace(/^[✓✔]\s*[✓✔]?\s*/g, '')}</li>
                     ))}
                   </ul>
                   {selectedPackage?.id === pkg.id && (
