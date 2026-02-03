@@ -11,7 +11,7 @@ import {
   CheckCircle,
   UtensilsCrossed
 } from "lucide-react";
-import { chartStatistics, overallStatistics } from "../../api/DashBoardApi";
+import { chartStatistics, overallStatistics, getPendingOrders } from "../../api/DashBoardApi";
 
 // --- Helper Functions ---
 const getDaysInMonth = (month, year) => new Date(year, month, 0).getDate();
@@ -80,12 +80,8 @@ export default function Dashboard() {
   const [year, setYear] = useState(currentYear);
 const [overview, setOverview] = useState(null);
 const [loadingStats, setLoadingStats] = useState(true);
-  const [orders, setOrders] = useState([
-    { id: 1, source: "Bàn 3", channel: "Tại chỗ", items: ["Phở bò", "Quẩy"], time: new Date() },
-    { id: 2, source: "Khách lẻ", channel: "Takeaway", items: ["Trà sữa Full topping"], time: new Date() },
-    { id: 3, source: "GrabFood", channel: "Giao hàng", items: ["Cơm gà xối mỡ"], time: new Date() },
-    { id: 4, source: "ShopeeFood", channel: "Giao hàng", items: ["Bún bò Huế"], time: new Date() },
-  ]);
+  const [orders, setOrders] = useState([]);
+  const [loadingOrders, setLoadingOrders] = useState(false);
   const [chartData, setChartData] = useState([]);
 const [loadingChart, setLoadingChart] = useState(false);
 
@@ -110,6 +106,42 @@ useEffect(() => {
 
   fetchOverview();
 }, []);
+
+useEffect(() => {
+  const fetchPendingOrders = async () => {
+    setLoadingOrders(true);
+    try {
+      const res = await getPendingOrders();
+      if (res?.success) {
+        const ordersData = res.data?.orders || [];
+        // Transform API data to match UI format
+        const transformedOrders = ordersData.map(order => ({
+          id: order.id,
+          order_number: order.order_number,
+          source: order.table_name || `Bàn ${order.table_number}`,
+          channel: "Tại chỗ",
+          items: [], // Will be populated if needed
+          time: new Date(order.created_at),
+          total_amount: order.total_amount,
+          payment_status: order.payment_status,
+          status: order.status
+        }));
+        setOrders(transformedOrders);
+      }
+    } catch (e) {
+      console.error("Lỗi load đơn hàng:", e);
+    } finally {
+      setLoadingOrders(false);
+    }
+  };
+
+  fetchPendingOrders();
+
+  // Auto refresh every 30 seconds
+  const interval = setInterval(fetchPendingOrders, 30000);
+  return () => clearInterval(interval);
+}, []);
+
 useEffect(() => {
   const fetchChart = async () => {
     setLoadingChart(true);

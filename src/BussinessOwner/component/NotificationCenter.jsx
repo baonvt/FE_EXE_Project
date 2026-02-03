@@ -115,14 +115,11 @@ const NotificationCenter = () => {
         setConfirmingOrderId(orderId);
         try {
             await confirmOrderPayment(orderId);
-            // Mark notification as read
-            markAsRead(notification.id);
-            // Refresh notifications
-            fetchNotifications();
             alert("Đã xác nhận thanh toán thành công!");
+            // Delete notification sau khi xác nhận thành công
+            deleteNotification(notification.id);
         } catch (error) {
             alert("Lỗi: " + (error.message || "Không thể xác nhận thanh toán"));
-        } finally {
             setConfirmingOrderId(null);
         }
     };
@@ -251,11 +248,11 @@ const NotificationCenter = () => {
                             <button
                                 className="btn btn-sm btn-link"
                                 onClick={() => {
-                                    navigate("/notifications");
+                                    navigate("/bussiness/orders");
                                     closeDropdown();
                                 }}
                             >
-                                Xem tất cả thông báo
+                                Xem tất cả đơn hàng
                             </button>
                         </div>
                     )}

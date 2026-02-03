@@ -236,10 +236,18 @@ export default function OrderManagement() {
   const handleEdit = async () => {
     if (!tableToEdit) return;
 
+    // Map frontend status to backend status
+    let backendStatus = editForm.status;
+    if (backendStatus === "empty") {
+      backendStatus = "available";
+    } else if (backendStatus === "serving") {
+      backendStatus = "occupied";
+    }
+
     const payload = {
       name: editForm.name,
       capacity: Number(editForm.capacity),
-      status: editForm.status,
+      status: backendStatus,
     };
 
     try {
@@ -249,7 +257,7 @@ export default function OrderManagement() {
       setTableToEdit(null);
     } catch (error) {
       console.error(error);
-      alert("Cập nhật bàn thất bại");
+      alert("Cập nhật bàn thất bại: " + (error.message || ""));
     }
   };
 

@@ -50,3 +50,18 @@ export const orderBestSeller = async () => {
     }
     return res.json();
 };
+
+// Lấy danh sách đơn hàng pending
+export const getPendingOrders = async () => {
+  const restaurantId = getRestaurantId();
+  const res = await fetch(
+    `${BASE_URL}/api/v1/restaurants/${restaurantId}/orders?status=pending&limit=10`,
+    { headers: getAuthHeaders() }
+  );
+
+  if (!res.ok) {
+    throw new Error("Failed to fetch pending orders");
+  }
+
+  return res.json();
+};
