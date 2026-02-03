@@ -5,30 +5,30 @@ export const getToken = () => {
 };
 
 export const getRestaurantId = () => {
-  // Đầu tiên thử lấy từ localStorage
+  // Ưu tiên decode từ token trước (vì token là nguồn đáng tin cậy nhất)
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    try {
+      const decoded = jwtDecode(token);
+      const restaurantIdFromToken = decoded.restaurant_id || null;
+      
+      if (restaurantIdFromToken) {
+        // Sync với localStorage để tăng performance lần sau
+        localStorage.setItem("restaurant_id", restaurantIdFromToken);
+        return parseInt(restaurantIdFromToken);
+      }
+    } catch (e) {
+      console.error("Token không hợp lệ:", e);
+    }
+  }
+  
+  // Fallback: lấy từ localStorage nếu token không có
   const storedId = localStorage.getItem("restaurant_id");
   if (storedId) {
     return parseInt(storedId);
   }
   
-  // Nếu không có, thử decode từ token
-  const token = localStorage.getItem("authToken");
-  if (!token) return null;
-
-  try {
-    const decoded = jwtDecode(token);
-    const restaurantId = decoded.restaurant_id || null;
-    
-    // Lưu lại vào localStorage để dùng sau
-    if (restaurantId) {
-      localStorage.setItem("restaurant_id", restaurantId);
-    }
-    
-    return restaurantId;
-  } catch (e) {
-    console.error("Token không hợp lệ:", e);
-    return null;
-  }
+  return null;
 };
 
 export const getUserId = () => {

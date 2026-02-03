@@ -50,6 +50,10 @@ export const AuthProvider = ({ children }) => {
   // --- LOGIN (CHỈ GỌI API) ---
   const login = async (email, password) => {
     setLoading(true);
+    
+    // Clear restaurant_id cũ trước khi login mới để tránh lẫn giữa các nhà hàng
+    localStorage.removeItem('restaurant_id');
+    
     try {
       // Xóa sạch fallback local, chỉ tin tưởng Server
       const url = `${BASE_URL}/api/v1/auth/login`;
@@ -136,6 +140,7 @@ export const AuthProvider = ({ children }) => {
     // Remove only auth-related keys to avoid wiping other app data (restaurants, settings...)
     localStorage.removeItem('authToken');
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('restaurant_id');
   };
 
   // --- REGISTER (CHỈ GỌI API) ---
