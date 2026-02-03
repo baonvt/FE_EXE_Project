@@ -75,7 +75,7 @@ useEffect(() => {
 
             {/* User Dropdown */}
             <Dropdown align="end">
-              <Dropdown.Toggle as="div" className="user-dropdown-toggle">
+              <Dropdown.Toggle as="div" className="user-dropdown-toggle d-flex align-items-center" style={{ cursor: 'pointer' }}>
                 <div className="avatar-container">
                     <img 
                         src="https://ui-avatars.com/api/?name=Mi+Cay&background=6366f1&color=fff" 
@@ -87,7 +87,6 @@ useEffect(() => {
                   <div className="username">{storeName}</div>
                   <div className="role">{storeName}</div>
                 </div>
-                <ChevronDown size={16} className="text-muted ms-2" />
               </Dropdown.Toggle>
 
               <Dropdown.Menu className="mt-2 p-2 border-0 shadow-lg animate-slide-in">

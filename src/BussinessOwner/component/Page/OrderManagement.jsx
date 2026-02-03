@@ -539,17 +539,6 @@ export default function OrderManagement() {
                             )}
                           </Dropdown.Item>
                           <Dropdown.Divider className="my-1" />
-                          {/* Soft Delete */}
-                          <Dropdown.Item
-                            onClick={() => {
-                              setTableToDelete(table);
-                              setDeleteMode("soft");
-                              setShowDeleteConfirm(true);
-                            }}
-                            className="rounded-3 fw-medium py-2 text-warning mb-1"
-                          >
-                            <PowerOff size={16} className="me-2" /> Ẩn bàn
-                          </Dropdown.Item>
                           {/* Hard Delete */}
                           <Dropdown.Item
                             onClick={() => {

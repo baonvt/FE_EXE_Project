@@ -282,10 +282,11 @@ export default function SettingsManagement() {
 
     // Get price based on billing cycle
     const getPrice = (pkg) => {
+        if (!pkg) return 0;
         if (billingCycle === "yearly") {
-            return pkg.yearly_price || pkg.monthly_price * 12 * 0.8;
+            return pkg.yearly_price || (pkg.monthly_price || 0) * 12 * 0.8;
         }
-        return pkg.monthly_price;
+        return pkg.monthly_price || 0;
     };
 
     const packageStatus = getPackageStatusLabel();
@@ -584,7 +585,7 @@ export default function SettingsManagement() {
                                         id="yearly"
                                         label={
                                             <span>
-                                                Hàng năm - <strong>{new Intl.NumberFormat("vi-VN").format(selectedPackage?.yearly_price || selectedPackage?.monthly_price * 12 * 0.8)}đ</strong>
+                                                Hàng năm - <strong>{new Intl.NumberFormat("vi-VN").format(selectedPackage?.yearly_price || (selectedPackage?.monthly_price || 0) * 12 * 0.8)}đ</strong>
                                                 <Badge bg="success" className="ms-2">Tiết kiệm 20%</Badge>
                                             </span>
                                         }
