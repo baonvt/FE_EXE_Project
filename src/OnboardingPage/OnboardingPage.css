@@ -195,13 +195,12 @@
   flex-wrap: nowrap;
   gap: 1rem;
   margin-bottom: 2rem;
-  overflow-x: auto;
+  align-items: stretch;
 }
 
 .packages-grid .package-card {
   flex: 1 1 0;
   min-width: 220px;
-  max-width: 280px;
 }
 
 .package-card {
@@ -212,6 +211,8 @@
   cursor: pointer;
   transition: all 0.3s;
   position: relative;
+  display: flex;
+  flex-direction: column;
 }
 
 .package-card:hover {
@@ -282,6 +283,7 @@
   list-style: none;
   padding: 0;
   margin: 0;
+  flex: 1;
 }
 
 .package-features li {
@@ -312,6 +314,7 @@
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 700;
+  margin-top: auto;
 }
 
 /* Trial Notice */

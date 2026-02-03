@@ -170,8 +170,36 @@ export default function OnboardingPage() {
         throw new Error(errorMsg);
       }
 
-      // Success
-      setPaymentData(data.data); // data structure from API: { success: true, data: { ... } }
+      // 🆓 Nếu là gói MIỄN PHÍ (is_free = true) -> Bỏ qua thanh toán, auto login
+      if (data.data?.is_free) {
+        console.log('🆓 Free package detected! Auto-logging in...');
+        showSuccess('Đăng ký thành công! Đang đăng nhập...');
+        setPaymentStatus('paid');
+        
+        // Auto login với thông tin đã đăng ký
+        try {
+          const result = await login(registerData.email, registerData.password);
+          if (result.success) {
+            if (result.restaurant_id) {
+              setRestaurantId(result.restaurant_id);
+              localStorage.setItem('restaurant_id', result.restaurant_id);
+            }
+            setStep(4); // Chuyển sang Step 4 - Bank Setup
+          } else {
+            showError('Đăng nhập tự động thất bại. Vui lòng đăng nhập lại.');
+            setTimeout(() => navigate('/'), 2000);
+          }
+        } catch (loginErr) {
+          console.error('Auto login error:', loginErr);
+          showError('Có lỗi xảy ra khi đăng nhập');
+          navigate('/');
+        }
+        setIsProcessing(false);
+        return;
+      }
+
+      // Gói có phí - Hiện QR thanh toán
+      setPaymentData(data.data);
       setIsProcessing(false);
 
     } catch (err) {
