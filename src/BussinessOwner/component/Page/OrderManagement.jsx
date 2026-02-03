@@ -236,27 +236,23 @@ export default function OrderManagement() {
   const handleEdit = async () => {
     if (!tableToEdit) return;
 
-    // Map frontend status to backend status
-    let backendStatus = editForm.status;
-    if (backendStatus === "empty") {
-      backendStatus = "available";
-    } else if (backendStatus === "serving") {
-      backendStatus = "occupied";
-    }
-
+    // editForm.status đã là backend status (available, occupied, reserved)
     const payload = {
       name: editForm.name,
       capacity: Number(editForm.capacity),
-      status: backendStatus,
+      status: editForm.status,
     };
 
+    console.log("Updating table with payload:", payload);
+
     try {
-      await updateTableOrder(tableToEdit.id, payload);
+      const result = await updateTableOrder(tableToEdit.id, payload);
+      console.log("Update result:", result);
       await fetchTables();
       setShowEditModal(false);
       setTableToEdit(null);
     } catch (error) {
-      console.error(error);
+      console.error("Update error:", error);
       alert("Cập nhật bàn thất bại: " + (error.message || ""));
     }
   };
@@ -509,10 +505,15 @@ export default function OrderManagement() {
                           <Dropdown.Item
                             onClick={() => {
                               setTableToEdit(table);
+                              // Map frontend status back to backend status for editing
+                              let backendStatus = table.status;
+                              if (backendStatus === "empty") backendStatus = "available";
+                              else if (backendStatus === "serving") backendStatus = "occupied";
+                              
                               setEditForm({
                                 name: table.name,
                                 capacity: table.capacity,
-                                status: table.status === "inactive" ? "empty" : table.status,
+                                status: backendStatus,
                               });
                               setShowEditModal(true);
                             }}

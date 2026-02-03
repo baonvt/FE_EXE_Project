@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { href, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/useAuth';
 import { useToast } from '../context/useToast';
 import { usePricing } from '../context/usePricing';
@@ -216,7 +216,7 @@ export default function LandingPage() {
               Tăng doanh thu, giảm chi phí vận hành cho nhà hàng của bạn.
             </p>
             <div className="hero-actions">
-              <button className="btn-primary-large" onClick={() => setShowRegisterModal(true)}>
+              <button className="btn-primary-large" onClick={() => href('#contact')}>
                 Dùng thử miễn phí 14 ngày
               </button>
               <button className="btn-secondary-large">
