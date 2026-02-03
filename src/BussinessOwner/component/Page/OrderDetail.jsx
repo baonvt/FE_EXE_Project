@@ -162,26 +162,10 @@ export default function OrderDetail() {
             <Card.Body>
               <h6 className="mb-3">Thanh toán</h6>
 
-              <div className="d-flex justify-content-between mb-2">
-                <span>Tạm tính</span>
-                <span className="fw-semibold">
-                  {order.totalAmount?.toLocaleString()} đ
-                </span>
-              </div>
-
-              <div className="d-flex justify-content-between mb-3">
-                <span>VAT (10%)</span>
-                <span className="fw-semibold">
-                  {(order.totalAmount * 0.1).toLocaleString()} đ
-                </span>
-              </div>
-
-              <hr />
-
               <div className="d-flex justify-content-between mb-3 fs-5">
                 <strong>Tổng cộng</strong>
                 <strong className="text-success">
-                  {(order.totalAmount * 1.1).toLocaleString()} đ
+                  {order.totalAmount?.toLocaleString()} đ
                 </strong>
               </div>
               <Button
