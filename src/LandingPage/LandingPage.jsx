@@ -267,8 +267,8 @@ export default function LandingPage() {
               Tăng doanh thu, giảm chi phí vận hành cho nhà hàng của bạn.
             </p>
             <div className="hero-actions">
-              <button className="btn-primary-large" onClick={() => document.getElementById('contact')?.scrollIntoView({ behavior: 'smooth' })}>
-                Dùng thử miễn phí 14 ngày
+              <button className="btn-primary-large" onClick={() => setShowRegisterModal(true)}>
+                Dùng thử miễn phí 
               </button>
               <button className="btn-secondary-large">
                 <span className="play-icon">▶</span> Xem demo
