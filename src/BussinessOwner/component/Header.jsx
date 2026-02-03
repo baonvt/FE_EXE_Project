@@ -90,7 +90,7 @@ useEffect(() => {
                 <ChevronDown size={16} className="text-muted ms-2" />
               </Dropdown.Toggle>
 
-              <Dropdown.Menu className="custom-dropdown-menu mt-2 p-2 border-0 shadow-lg animate-slide-in">
+              <Dropdown.Menu className="mt-2 p-2 border-0 shadow-lg animate-slide-in">
                 <div className="px-3 py-2 border-bottom mb-2">
                     <p className="mb-0 fw-bold text-dark">{storeName}</p>
                     <small className="text-muted">{email}</small>
@@ -103,11 +103,7 @@ useEffect(() => {
 >
   <User size={18} className="me-2 text-primary" />
   Hồ sơ cá nhân
-</Dropdown.Item>
-                <Dropdown.Item href="/settings" className="dropdown-item-custom">
-                  <Settings size={18} className="me-2 text-primary" /> Cài đặt hệ thống
-                </Dropdown.Item>
-                
+</Dropdown.Item>      
                 <Dropdown.Divider className="my-2" />
                 
                 <Dropdown.Item onClick={handleLogout} className="dropdown-item-custom text-danger">

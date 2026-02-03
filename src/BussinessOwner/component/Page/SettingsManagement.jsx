@@ -10,6 +10,7 @@ import {
     Badge,
     Spinner,
     Alert,
+    Modal,
 } from "react-bootstrap";
 import {
     CreditCard,
@@ -25,6 +26,8 @@ import {
     unlinkBankAccount,
     getCurrentPackage,
     getAllPackages,
+    createUpgradeSubscription,
+    getUpgradeStatus,
     SUPPORTED_BANKS,
 } from "../../api/SettingsAPI";
 
@@ -50,6 +53,14 @@ export default function SettingsManagement() {
     const [allPackages, setAllPackages] = useState([]);
     const [packageLoading, setPackageLoading] = useState(true);
     const [restaurantId, setRestaurantId] = useState(null);
+
+    // Upgrade Modal State
+    const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+    const [selectedPackage, setSelectedPackage] = useState(null);
+    const [billingCycle, setBillingCycle] = useState("monthly");
+    const [upgradeData, setUpgradeData] = useState(null);
+    const [upgradeLoading, setUpgradeLoading] = useState(false);
+    const [checkingPayment, setCheckingPayment] = useState(false);
 
     // Fetch data on mount
     useEffect(() => {
@@ -78,7 +89,7 @@ export default function SettingsManagement() {
                     setRestaurantId(parseInt(storedRestaurantId));
                     await Promise.all([
                         fetchBankSettings(storedRestaurantId),
-                        fetchPackageInfo(storedRestaurantId),
+                        fetchPackageInfo(),
                     ]);
                 } else {
                     console.error("Không tìm thấy restaurant_id");
@@ -116,17 +127,17 @@ export default function SettingsManagement() {
         }
     };
 
-    const fetchPackageInfo = async (restId) => {
+    const fetchPackageInfo = async () => {
         setPackageLoading(true);
         try {
             const [restaurantRes, packagesRes] = await Promise.all([
-                getCurrentPackage(restId),
+                getCurrentPackage(),
                 getAllPackages(),
             ]);
 
             if (restaurantRes.data) {
                 setCurrentPackage({
-                    id: restaurantRes.data.package_id,
+                    id: restaurantRes.data.package?.id,
                     name: restaurantRes.data.package?.display_name || "Starter",
                     end_date: restaurantRes.data.package_end_date,
                     status: restaurantRes.data.package_status,
@@ -185,8 +196,99 @@ export default function SettingsManagement() {
 
     const formatDate = (dateStr) => {
         if (!dateStr) return "---";
-        return new Date(dateStr).toLocaleDateString("vi-VN");
+        const date = new Date(dateStr);
+        // Kiểm tra ngày hợp lệ và không phải năm 1970/0001
+        if (isNaN(date.getTime()) || date.getFullYear() < 2000) {
+            return "---";
+        }
+        return date.toLocaleDateString("vi-VN", {
+            day: "2-digit",
+            month: "2-digit", 
+            year: "numeric"
+        });
     };
+
+    // Check if package is expired
+    const isPackageExpired = () => {
+        if (!currentPackage?.end_date) return true;
+        const endDate = new Date(currentPackage.end_date);
+        if (isNaN(endDate.getTime()) || endDate.getFullYear() < 2000) return true;
+        return endDate < new Date();
+    };
+
+    // Get package status label
+    const getPackageStatusLabel = () => {
+        if (currentPackage?.status === "active" && !isPackageExpired()) {
+            return { text: "Đang hoạt động", variant: "success" };
+        }
+        return { text: "Hết hạn", variant: "secondary" };
+    };
+
+    // Handle upgrade button click
+    const handleUpgradeClick = (pkg) => {
+        setSelectedPackage(pkg);
+        setUpgradeData(null);
+        setBillingCycle("monthly");
+        setShowUpgradeModal(true);
+    };
+
+    // Create upgrade request
+    const handleCreateUpgrade = async () => {
+        if (!selectedPackage || !restaurantId) return;
+
+        setUpgradeLoading(true);
+        try {
+            const response = await createUpgradeSubscription(
+                restaurantId,
+                selectedPackage.id,
+                billingCycle
+            );
+            setUpgradeData(response.data);
+            // Start polling for payment status
+            startPaymentPolling(response.data.subscription_code);
+        } catch (error) {
+            console.error("Lỗi tạo nâng cấp:", error);
+            alert(error.message || "Có lỗi xảy ra khi tạo yêu cầu nâng cấp");
+        } finally {
+            setUpgradeLoading(false);
+        }
+    };
+
+    // Poll for payment status
+    const startPaymentPolling = (code) => {
+        setCheckingPayment(true);
+        const interval = setInterval(async () => {
+            try {
+                const response = await getUpgradeStatus(code);
+                if (response.data?.status === "paid" || response.data?.status === "active") {
+                    clearInterval(interval);
+                    setCheckingPayment(false);
+                    setShowUpgradeModal(false);
+                    alert("Thanh toán thành công! Gói của bạn đã được nâng cấp.");
+                    // Refresh package info
+                    fetchPackageInfo();
+                }
+            } catch (error) {
+                console.error("Lỗi kiểm tra thanh toán:", error);
+            }
+        }, 5000); // Check every 5 seconds
+
+        // Stop polling after 10 minutes
+        setTimeout(() => {
+            clearInterval(interval);
+            setCheckingPayment(false);
+        }, 600000);
+    };
+
+    // Get price based on billing cycle
+    const getPrice = (pkg) => {
+        if (billingCycle === "yearly") {
+            return pkg.yearly_price || pkg.monthly_price * 12 * 0.8;
+        }
+        return pkg.monthly_price;
+    };
+
+    const packageStatus = getPackageStatusLabel();
 
     return (
         <Container fluid className="p-4" style={{ backgroundColor: "#f8f9fa", minHeight: "100vh" }}>
@@ -363,10 +465,10 @@ export default function SettingsManagement() {
                                                     </p>
                                                 </div>
                                                 <Badge
-                                                    bg={currentPackage?.status === "active" ? "success" : "secondary"}
+                                                    bg={packageStatus.variant}
                                                     className="px-3 py-2"
                                                 >
-                                                    {currentPackage?.status === "active" ? "Đang hoạt động" : "Hết hạn"}
+                                                    {packageStatus.text}
                                                 </Badge>
                                             </div>
                                         </Card.Body>
@@ -380,7 +482,7 @@ export default function SettingsManagement() {
 
                                     <div className="d-flex flex-column gap-3">
                                         {allPackages
-                                            .filter((pkg) => pkg.id !== currentPackage?.id)
+                                            .filter((pkg) => pkg.monthly_price > (currentPackage?.id ? allPackages.find(p => p.id === currentPackage.id)?.monthly_price || 0 : 0))
                                             .map((pkg) => (
                                                 <Card
                                                     key={pkg.id}
@@ -389,21 +491,30 @@ export default function SettingsManagement() {
                                                 >
                                                     <Card.Body className="d-flex justify-content-between align-items-center py-3">
                                                         <div>
-                                                            <h6 className="fw-bold mb-1">{pkg.display_name}</h6>
+                                                            <h6 className="fw-bold mb-1">
+                                                                {pkg.display_name}
+                                                                {pkg.is_popular && (
+                                                                    <Badge bg="warning" className="ms-2">Phổ biến</Badge>
+                                                                )}
+                                                            </h6>
                                                             <small className="text-muted">
                                                                 {new Intl.NumberFormat("vi-VN").format(pkg.monthly_price)}đ/tháng
                                                             </small>
                                                         </div>
-                                                        <Button size="sm" variant="outline-primary">
+                                                        <Button 
+                                                            size="sm" 
+                                                            variant="outline-primary"
+                                                            onClick={() => handleUpgradeClick(pkg)}
+                                                        >
                                                             Nâng cấp
                                                         </Button>
                                                     </Card.Body>
                                                 </Card>
                                             ))}
 
-                                        {allPackages.length === 0 && (
+                                        {allPackages.filter((pkg) => pkg.monthly_price > (currentPackage?.id ? allPackages.find(p => p.id === currentPackage.id)?.monthly_price || 0 : 0)).length === 0 && (
                                             <p className="text-muted text-center py-3">
-                                                Không có gói nâng cấp khả dụng
+                                                Bạn đang dùng gói cao nhất
                                             </p>
                                         )}
                                     </div>
@@ -413,6 +524,148 @@ export default function SettingsManagement() {
                     </Card>
                 </Col>
             </Row>
+
+            {/* Upgrade Modal */}
+            <Modal 
+                show={showUpgradeModal} 
+                onHide={() => !upgradeLoading && !checkingPayment && setShowUpgradeModal(false)}
+                centered
+                size="lg"
+            >
+                <Modal.Header closeButton>
+                    <Modal.Title>
+                        <ArrowUpCircle className="me-2" />
+                        Nâng cấp gói {selectedPackage?.display_name}
+                    </Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {!upgradeData ? (
+                        <>
+                            {/* Package Details */}
+                            <div className="bg-light p-4 rounded-3 mb-4">
+                                <h5 className="fw-bold mb-3">{selectedPackage?.display_name}</h5>
+                                <p className="text-muted mb-3">{selectedPackage?.description}</p>
+                                
+                                {/* Features */}
+                                <div className="mb-3">
+                                    <strong>Tính năng:</strong>
+                                    <ul className="mt-2 mb-0">
+                                        {selectedPackage?.features && JSON.parse(selectedPackage.features).map((feature, idx) => (
+                                            <li key={idx}>{feature}</li>
+                                        ))}
+                                    </ul>
+                                </div>
+                                
+                                <div className="d-flex gap-2">
+                                    <Badge bg="secondary">Tối đa {selectedPackage?.max_menu_items} món</Badge>
+                                    <Badge bg="secondary">Tối đa {selectedPackage?.max_tables} bàn</Badge>
+                                    <Badge bg="secondary">Tối đa {selectedPackage?.max_categories} danh mục</Badge>
+                                </div>
+                            </div>
+
+                            {/* Billing Cycle Selection */}
+                            <div className="mb-4">
+                                <h6 className="fw-bold mb-3">Chu kỳ thanh toán</h6>
+                                <div className="d-flex gap-3">
+                                    <Form.Check
+                                        type="radio"
+                                        id="monthly"
+                                        label={
+                                            <span>
+                                                Hàng tháng - <strong>{new Intl.NumberFormat("vi-VN").format(selectedPackage?.monthly_price)}đ</strong>
+                                            </span>
+                                        }
+                                        name="billingCycle"
+                                        checked={billingCycle === "monthly"}
+                                        onChange={() => setBillingCycle("monthly")}
+                                    />
+                                    <Form.Check
+                                        type="radio"
+                                        id="yearly"
+                                        label={
+                                            <span>
+                                                Hàng năm - <strong>{new Intl.NumberFormat("vi-VN").format(selectedPackage?.yearly_price || selectedPackage?.monthly_price * 12 * 0.8)}đ</strong>
+                                                <Badge bg="success" className="ms-2">Tiết kiệm 20%</Badge>
+                                            </span>
+                                        }
+                                        name="billingCycle"
+                                        checked={billingCycle === "yearly"}
+                                        onChange={() => setBillingCycle("yearly")}
+                                    />
+                                </div>
+                            </div>
+
+                            {/* Total */}
+                            <div className="bg-primary bg-opacity-10 p-3 rounded-3">
+                                <div className="d-flex justify-content-between align-items-center">
+                                    <span className="fw-bold">Tổng thanh toán:</span>
+                                    <span className="fs-4 fw-bold text-primary">
+                                        {new Intl.NumberFormat("vi-VN").format(getPrice(selectedPackage))}đ
+                                    </span>
+                                </div>
+                            </div>
+                        </>
+                    ) : (
+                        /* QR Code Payment */
+                        <div className="text-center">
+                            <h5 className="mb-3">Quét mã QR để thanh toán</h5>
+                            
+                            <div className="mb-3">
+                                <img 
+                                    src={upgradeData.qr_url} 
+                                    alt="QR Code thanh toán"
+                                    style={{ maxWidth: "300px", width: "100%" }}
+                                    className="border rounded"
+                                />
+                            </div>
+
+                            <div className="bg-light p-3 rounded-3 mb-3">
+                                <p className="mb-1"><strong>Số tiền:</strong> {new Intl.NumberFormat("vi-VN").format(upgradeData.amount)}đ</p>
+                                <p className="mb-1"><strong>Nội dung:</strong> {upgradeData.subscription_code}</p>
+                                <p className="mb-0 text-muted small">
+                                    Vui lòng nhập đúng nội dung chuyển khoản
+                                </p>
+                            </div>
+
+                            {checkingPayment && (
+                                <Alert variant="info" className="d-flex align-items-center justify-content-center gap-2">
+                                    <Spinner size="sm" animation="border" />
+                                    <span>Đang chờ thanh toán...</span>
+                                </Alert>
+                            )}
+
+                            <p className="text-muted small">
+                                Hệ thống sẽ tự động xác nhận sau khi thanh toán thành công
+                            </p>
+                        </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button 
+                        variant="secondary" 
+                        onClick={() => setShowUpgradeModal(false)}
+                        disabled={upgradeLoading || checkingPayment}
+                    >
+                        Đóng
+                    </Button>
+                    {!upgradeData && (
+                        <Button 
+                            variant="primary" 
+                            onClick={handleCreateUpgrade}
+                            disabled={upgradeLoading}
+                        >
+                            {upgradeLoading ? (
+                                <>
+                                    <Spinner size="sm" className="me-2" />
+                                    Đang xử lý...
+                                </>
+                            ) : (
+                                "Tiếp tục thanh toán"
+                            )}
+                        </Button>
+                    )}
+                </Modal.Footer>
+            </Modal>
         </Container>
     );
 }

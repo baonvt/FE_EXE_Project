@@ -71,14 +71,6 @@ export default function Sidebar() {
           </NavLink>
         </Nav>
       </div>
-
-      {/* Footer */}
-      <div className="sidebar-footer">
-        <div className="nav-item text-danger mt-1" style={{ cursor: "pointer" }}>
-          <LogOut size={20} />
-          <span>Đăng xuất</span>
-        </div>
-      </div>
     </div>
   );
 }

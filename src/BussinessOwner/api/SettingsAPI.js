@@ -92,10 +92,9 @@ export const unlinkBankAccount = async (restaurantId) => {
 /**
  * Lấy thông tin gói hiện tại của nhà hàng
  */
-export const getCurrentPackage = async (restaurantId) => {
-    const restId = restaurantId || getRestaurantId();
+export const getCurrentPackage = async () => {
     const res = await fetch(
-        `${BASE_URL}/api/v1/restaurants/${restId}`,
+        `${BASE_URL}/api/v1/restaurants/me`,
         { headers: getAuthHeaders() }
     );
 
@@ -116,6 +115,45 @@ export const getAllPackages = async () => {
     if (!res.ok) {
         const err = await res.text();
         throw new Error(err || "Lấy danh sách gói thất bại");
+    }
+
+    return res.json();
+};
+
+/**
+ * Tạo yêu cầu nâng cấp gói với QR thanh toán
+ */
+export const createUpgradeSubscription = async (restaurantId, packageId, billingCycle = "monthly") => {
+    const restId = restaurantId || getRestaurantId();
+    const res = await fetch(
+        `${BASE_URL}/api/v1/restaurants/${restId}/upgrade`,
+        {
+            method: "POST",
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+                package_id: packageId,
+                billing_cycle: billingCycle,
+            }),
+        }
+    );
+
+    if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.message || "Tạo yêu cầu nâng cấp thất bại");
+    }
+
+    return res.json();
+};
+
+/**
+ * Kiểm tra trạng thái thanh toán nâng cấp
+ */
+export const getUpgradeStatus = async (subscriptionCode) => {
+    const res = await fetch(`${BASE_URL}/api/v1/upgrade/${subscriptionCode}/status`);
+
+    if (!res.ok) {
+        const err = await res.text();
+        throw new Error(err || "Kiểm tra trạng thái thất bại");
     }
 
     return res.json();
