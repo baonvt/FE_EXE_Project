@@ -170,7 +170,7 @@ export default function OnboardingPage() {
         throw new Error(errorMsg);
       }
 
-      // 🆓 Nếu là gói MIỄN PHÍ (is_free = true) -> Bỏ qua thanh toán, auto login
+      // 🆓 Nếu là gói MIỄN PHÍ (is_free = true) -> Bỏ qua thanh toán, auto login và về Dashboard
       if (data.data?.is_free) {
         console.log('🆓 Free package detected! Auto-logging in...');
         showSuccess('Đăng ký thành công! Đang đăng nhập...');
@@ -184,7 +184,9 @@ export default function OnboardingPage() {
               setRestaurantId(result.restaurant_id);
               localStorage.setItem('restaurant_id', result.restaurant_id);
             }
-            setStep(4); // Chuyển sang Step 4 - Bank Setup
+            // Gói miễn phí - chuyển thẳng về Dashboard, không cần setup bank
+            showSuccess('Chào mừng bạn đến với hệ thống!');
+            navigate('/bussiness/dashboard');
           } else {
             showError('Đăng nhập tự động thất bại. Vui lòng đăng nhập lại.');
             setTimeout(() => navigate('/'), 2000);
