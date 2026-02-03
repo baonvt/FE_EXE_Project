@@ -12,6 +12,7 @@ import {
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { getOrderDetail } from "../../api/OrderDetail";
+import { updateTableOrder } from "../../api/OrderManagementAPI";
 
 const statusConfig = {
   
@@ -24,6 +25,22 @@ export default function OrderDetail() {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+  const [closingTable, setClosingTable] = useState(false);
+
+  // Đóng bàn - chuyển status thành available
+  const handleCloseTable = async () => {
+    if (closingTable) return;
+    
+    setClosingTable(true);
+    try {
+      await updateTableOrder(id, { status: "available" });
+      navigate("/bussiness/orders");
+    } catch (err) {
+      alert(err.message || "Đóng bàn thất bại");
+    } finally {
+      setClosingTable(false);
+    }
+  };
 
   useEffect(() => {
     const fetchOrder = async () => {
@@ -168,11 +185,19 @@ export default function OrderDetail() {
                 </strong>
               </div>
               <Button
-                variant="outline-danger"
+                variant="danger"
                 className="w-100"
-                onClick={() => navigate("/bussiness/orders")}
+                onClick={handleCloseTable}
+                disabled={closingTable}
               >
-                Đóng bàn
+                {closingTable ? (
+                  <>
+                    <Spinner animation="border" size="sm" className="me-2" />
+                    Đang đóng bàn...
+                  </>
+                ) : (
+                  "Đóng bàn"
+                )}
               </Button>
             </Card.Body>
           </Card>
