@@ -1,5 +1,9 @@
 import { jwtDecode } from "jwt-decode";
 
+export const getToken = () => {
+  return localStorage.getItem("authToken");
+};
+
 export const getRestaurantId = () => {
   // Đầu tiên thử lấy từ localStorage
   const storedId = localStorage.getItem("restaurant_id");
@@ -40,4 +44,4 @@ export const getUserId = () => {
   }
 };
 
-export default { getRestaurantId, getUserId };
+export default { getToken, getRestaurantId, getUserId };
