@@ -5,6 +5,8 @@ import { useToast } from '../context/useToast';
 import { usePricing } from '../context/usePricing';
 import './LandingPage.css';
 
+const API_BASE = 'https://apiqrcodeexe201-production.up.railway.app';
+
 export default function LandingPage() {
   const navigate = useNavigate();
   const { login } = useAuth();
@@ -22,6 +24,55 @@ export default function LandingPage() {
   });
   const [error, setError] = useState('');
   const [billingCycle, setBillingCycle] = useState('monthly'); // 'monthly' or 'yearly'
+
+  // Contact form state
+  const [contactForm, setContactForm] = useState({
+    name: '',
+    phone: '',
+    email: '',
+    subject: 'Đăng ký dùng thử',
+    message: ''
+  });
+  const [contactLoading, setContactLoading] = useState(false);
+  const [contactSuccess, setContactSuccess] = useState(false);
+
+  const handleContactSubmit = async (e) => {
+    e.preventDefault();
+    setContactLoading(true);
+    setError('');
+
+    try {
+      const response = await fetch(`${API_BASE}/api/v1/contact`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(contactForm)
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Không thể gửi tin nhắn');
+      }
+
+      setContactSuccess(true);
+      showToast('Gửi tin nhắn thành công! Chúng tôi sẽ liên hệ lại sớm.', 'success');
+      setContactForm({
+        name: '',
+        phone: '',
+        email: '',
+        subject: 'Đăng ký dùng thử',
+        message: ''
+      });
+
+      // Reset success message after 5 seconds
+      setTimeout(() => setContactSuccess(false), 5000);
+    } catch (err) {
+      setError(err.message);
+      showToast(err.message, 'error');
+    } finally {
+      setContactLoading(false);
+    }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -355,40 +406,86 @@ export default function LandingPage() {
             {/* Contact Form */}
             <div className="contact-form-wrapper">
               <h3 className="form-title">Gửi tin nhắn cho chúng tôi</h3>
-              <form className="contact-form">
+              
+              {contactSuccess && (
+                <div className="success-message" style={{
+                  background: '#d4edda',
+                  color: '#155724',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  marginBottom: '16px',
+                  textAlign: 'center'
+                }}>
+                  ✅ Cảm ơn bạn! Chúng tôi sẽ liên hệ lại trong thời gian sớm nhất.
+                </div>
+              )}
+
+              <form className="contact-form" onSubmit={handleContactSubmit}>
                 <div className="form-row">
                   <div className="form-group">
                     <label>Họ tên *</label>
-                    <input type="text" placeholder="Nhập họ tên đầy đủ..." required />
+                    <input 
+                      type="text" 
+                      placeholder="Nhập họ tên đầy đủ..." 
+                      required 
+                      value={contactForm.name}
+                      onChange={(e) => setContactForm({...contactForm, name: e.target.value})}
+                    />
                   </div>
                   <div className="form-group">
                     <label>Số điện thoại *</label>
-                    <input type="tel" placeholder="0912345678" required />
+                    <input 
+                      type="tel" 
+                      placeholder="0912345678" 
+                      required 
+                      value={contactForm.phone}
+                      onChange={(e) => setContactForm({...contactForm, phone: e.target.value})}
+                    />
                   </div>
                 </div>
 
                 <div className="form-group">
                   <label>Email *</label>
-                  <input type="email" placeholder="email@example.com" required />
+                  <input 
+                    type="email" 
+                    placeholder="email@example.com" 
+                    required 
+                    value={contactForm.email}
+                    onChange={(e) => setContactForm({...contactForm, email: e.target.value})}
+                  />
                 </div>
 
                 <div className="form-group">
                   <label>Chủ đề</label>
-                  <select>
-                    <option>Đăng ký dùng thử</option>
-                    <option>Tư vấn gói dịch vụ</option>
-                    <option>Hỗ trợ kỹ thuật</option>
-                    <option>Khác</option>
+                  <select
+                    value={contactForm.subject}
+                    onChange={(e) => setContactForm({...contactForm, subject: e.target.value})}
+                  >
+                    <option value="Đăng ký dùng thử">Đăng ký dùng thử</option>
+                    <option value="Tư vấn gói dịch vụ">Tư vấn gói dịch vụ</option>
+                    <option value="Hỗ trợ kỹ thuật">Hỗ trợ kỹ thuật</option>
+                    <option value="Khác">Khác</option>
                   </select>
                 </div>
 
                 <div className="form-group">
                   <label>Tin nhắn *</label>
-                  <textarea rows="4" placeholder="Mô tả chi tiết yêu cầu của bạn..." required></textarea>
+                  <textarea 
+                    rows="4" 
+                    placeholder="Mô tả chi tiết yêu cầu của bạn..." 
+                    required
+                    value={contactForm.message}
+                    onChange={(e) => setContactForm({...contactForm, message: e.target.value})}
+                  ></textarea>
                 </div>
 
-                <button type="submit" className="btn-submit">
-                  📤 Gửi tin nhắn
+                <button 
+                  type="submit" 
+                  className="btn-submit"
+                  disabled={contactLoading}
+                  style={{ opacity: contactLoading ? 0.7 : 1 }}
+                >
+                  {contactLoading ? '⏳ Đang gửi...' : '📤 Gửi tin nhắn'}
                 </button>
               </form>
             </div>
