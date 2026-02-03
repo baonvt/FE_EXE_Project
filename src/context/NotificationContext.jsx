@@ -6,8 +6,8 @@ import {
     markAllAsRead,
     deleteNotification,
     clearAllNotifications,
-} from "../api/NotificationAPI";
-import { getToken, getRestaurantId } from "../../utils/auth";
+} from "../BussinessOwner/api/NotificationAPI";
+import { getToken, getRestaurantId } from "../utils/auth";
 
 export const NotificationContext = createContext();
 
