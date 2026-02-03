@@ -93,3 +93,9 @@ export const getPublicCategories = async (restaurantId) => {
   const list = data?.data ?? data;
   return Array.isArray(list) ? list : [];
 };
+
+// Theo dõi đơn hàng qua order number (Public API)
+export const trackOrder = async (orderNumber) => {
+  const data = await api(`/api/v1/public/orders/${encodeURIComponent(orderNumber)}/track`);
+  return data?.data ?? data;
+};

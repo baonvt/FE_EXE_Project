@@ -1,0 +1,91 @@
+.order-tracking-page {
+    min-height: 100vh;
+    background-color: #f8f9fa;
+}
+
+.tracking-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.tracking-header h4 {
+    color: white;
+    font-weight: 600;
+}
+
+.tracking-header small {
+    color: rgba(255, 255, 255, 0.8) !important;
+}
+
+.tracking-loading {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    color: #6c757d;
+}
+
+.order-number-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.order-number {
+    font-family: monospace;
+    font-size: 1.5rem;
+    color: #495057;
+    letter-spacing: 2px;
+}
+
+.status-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.status-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.payment-card {
+    border: none;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.spin {
+    animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+/* Card styling */
+.order-tracking-page .card {
+    border-radius: 12px;
+}
+
+.order-tracking-page .card-header {
+    border-radius: 12px 12px 0 0;
+    border-bottom: 1px solid #e9ecef;
+}
+
+.order-tracking-page .card-footer {
+    border-radius: 0 0 12px 12px;
+    border-top: 1px solid #e9ecef;
+}
+
+.order-tracking-page .list-group-item {
+    padding: 12px 16px;
+}

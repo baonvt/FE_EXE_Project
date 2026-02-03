@@ -3,7 +3,6 @@ import { useEffect, useState } from "react";
 import { Container, Dropdown, Navbar, Modal, Button, Form, InputGroup } from "react-bootstrap";
 import { 
   Search, 
-  Bell, 
   User, 
   Settings, 
   LogOut, 
@@ -13,12 +12,11 @@ import {
 import "../css/header.css";
 import { getBusinessOwnerProfile } from "../api/ProfileAPI";
 import { Link } from "react-router-dom";
+import NotificationCenter from "./NotificationCenter";
 export default function Header({ toggleSidebar }) { // Nhận prop toggleSidebar nếu muốn làm mobile responsive sau này
   const [showLogoutModal, setShowLogoutModal] = useState(false);
-const [storeName, setStoreName] = useState("");
-const [email, setEmail] = useState("");
-  // Giả lập số thông báo
-  const notificationCount = 3; 
+  const [storeName, setStoreName] = useState("");
+  const [email, setEmail] = useState("");
 
   const handleLogout = () => setShowLogoutModal(true);
   
@@ -70,15 +68,8 @@ useEffect(() => {
           {/* RIGHT: Actions & Profile */}
           <div className="d-flex align-items-center gap-3">
             
-            {/* Notification Bell */}
-            <div className="position-relative cursor-pointer p-2 rounded-circle hover-bg-light transition-all">
-              <Bell size={22} className="text-secondary" />
-              {notificationCount > 0 && (
-                <span className="position-absolute top-0 start-100 translate-middle badge border border-light rounded-circle bg-danger p-1">
-                  <span className="visually-hidden">New alerts</span>
-                </span>
-              )}
-            </div>
+            {/* Notification Bell - Using NotificationCenter */}
+            <NotificationCenter />
 
             <div className="vr h-50 mx-2 text-secondary opacity-25"></div>
 

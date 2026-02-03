@@ -1,6 +1,6 @@
 import "bootstrap/dist/css/bootstrap.min.css";
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   Container,
   Row,
@@ -33,6 +33,7 @@ import "./CustomerMenu.css";
 
 function CustomerMenuContent() {
   const { restaurantSlug, tableNumber } = useParams();
+  const navigate = useNavigate();
   const { showToast } = useToast();
   const {
     restaurantId,
@@ -276,11 +277,16 @@ function CustomerMenuContent() {
       // Sử dụng API mới: tạo order theo slug
       const res = await createOrderBySlug(restaurantSlug, payload);
       const order = res?.data ?? res;
-      const id = order?.id ?? order?.orderId ?? order?.order_id;
-      if (id) {
+      const orderNumber = order?.order_number ?? order?.orderNumber;
+      
+      if (orderNumber) {
         clearCart();
         setShowCart(false);
-        showToast("Đặt món thành công!", "success");
+        showToast("Đặt món thành công! Đang chuyển đến trang theo dõi...", "success");
+        // Chuyển hướng đến trang tracking
+        setTimeout(() => {
+          navigate(`/order/${orderNumber}`);
+        }, 1000);
       } else {
         clearCart();
         setShowCart(false);

@@ -7,6 +7,7 @@ import RequireAuth from './components/RequireAuth'
 import CustomerMenuPage from './Customer/pages/CustomerMenuPage'
 import CustomerEntryPage from './Customer/pages/CustomerEntryPage'
 import CustomerNotFoundPage from './Customer/pages/CustomerNotFoundPage'
+import OrderTrackingPage from './Customer/pages/OrderTrackingPage'
 import { ToastProvider } from './context/ToastContext'
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
           {/* Customer QR Scan Routes */}
           <Route path="/customer" element={<CustomerEntryPage />} />
           <Route path="/:restaurantSlug/menu/:tableNumber" element={<CustomerMenuPage />} />
+          <Route path="/order/:orderNumber" element={<OrderTrackingPage />} />
           <Route path="/not-found" element={<CustomerNotFoundPage />} />
           
           <Route path="*" element={<Navigate to="/" replace />} />
