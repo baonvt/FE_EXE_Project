@@ -39,7 +39,6 @@ export default function LandingPage() {
   const handleContactSubmit = async (e) => {
     e.preventDefault();
     setContactLoading(true);
-    setError('');
 
     try {
       const response = await fetch(`${API_BASE}/api/v1/contact`, {
@@ -67,8 +66,7 @@ export default function LandingPage() {
       // Reset success message after 5 seconds
       setTimeout(() => setContactSuccess(false), 5000);
     } catch (err) {
-      setError(err.message);
-      showToast(err.message, 'error');
+      showToast(err.message || 'Có lỗi xảy ra, vui lòng thử lại!', 'error');
     } finally {
       setContactLoading(false);
     }
