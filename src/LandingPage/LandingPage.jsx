@@ -352,7 +352,7 @@ export default function LandingPage() {
                 </div>
                 <ul className="package-features">
                   {pkg.features.map((feature, idx) => (
-                    <li key={idx}>✓ {feature}</li>
+                    <li key={idx}>{feature.replace(/^[✓✔]\s*/g, '')}</li>
                   ))}
                 </ul>
                 <button className="btn-package" onClick={() => setShowRegisterModal(true)}>
