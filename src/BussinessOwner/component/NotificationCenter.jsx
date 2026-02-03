@@ -115,7 +115,7 @@ const NotificationCenter = () => {
         setConfirmingOrderId(orderId);
         try {
             await confirmOrderPayment(orderId);
-            alert("Đã xác nhận thanh toán thành công!");
+            alert("Đã xác nhận nhận tiền thành công! Đơn hàng sẽ được chuyển sang trạng thái đã thanh toán.");
             // Delete notification sau khi xác nhận thành công
             deleteNotification(notification.id);
         } catch (error) {
@@ -217,13 +217,14 @@ const NotificationCenter = () => {
                                                 className="btn btn-sm btn-success mt-2"
                                                 onClick={(e) => handleConfirmPayment(e, notification)}
                                                 disabled={confirmingOrderId === notification.data.order_id}
+                                                title="Nhấn khi đã nhận được tiền từ khách hàng"
                                             >
                                                 {confirmingOrderId === notification.data.order_id ? (
                                                     <span className="spinner-border spinner-border-sm me-1"></span>
                                                 ) : (
                                                     <i className="bi bi-check-circle me-1"></i>
                                                 )}
-                                                Xác nhận thanh toán
+                                                Xác nhận đã nhận tiền
                                             </button>
                                         )}
                                     </div>
