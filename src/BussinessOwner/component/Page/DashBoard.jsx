@@ -55,7 +55,6 @@ const OrderItem = ({ order, onComplete, onConfirmPayment, confirmingId }) => {
             {order.channel}
           </Badge>
           <span className="fw-bold text-dark">{order.source}</span>
-          {getPaymentBadge(order.payment_status)}
         </div>
         <div className="text-muted small d-flex align-items-center gap-1">
           <UtensilsCrossed size={14} /> Đơn #{order.order_number}
@@ -69,37 +68,34 @@ const OrderItem = ({ order, onComplete, onConfirmPayment, confirmingId }) => {
           )}
         </div>
       </div>
-      <div className="d-flex gap-2">
-        {/* Nút xác nhận đã nhận tiền - chỉ hiện khi chưa thanh toán */}
-        {order.payment_status === "pending" && (
+      <div className="d-flex gap-2 align-items-center">
+        {/* Nút xác nhận đã thanh toán - luôn hiển thị nếu chưa paid */}
+        {order.payment_status !== "paid" && (
           <Button 
             variant="success" 
             size="sm" 
             className="rounded-pill px-3"
             onClick={() => onConfirmPayment(order.id)}
             disabled={confirmingId === order.id}
-            title="Xác nhận đã nhận tiền từ khách"
+            title="Xác nhận khách đã thanh toán"
           >
             {confirmingId === order.id ? (
               <span className="spinner-border spinner-border-sm"></span>
             ) : (
               <>
                 <CreditCard size={16} className="me-1" />
-                Xác nhận tiền
+                Xác nhận đã thanh toán
               </>
             )}
           </Button>
         )}
-        {/* Nút hoàn thành đơn */}
-        <Button 
-          variant="outline-success" 
-          size="sm" 
-          className="rounded-circle p-2 border-2"
-          onClick={() => onComplete(order.id)}
-          title="Hoàn thành đơn"
-        >
-          <CheckCircle size={20} />
-        </Button>
+        {/* Hiện badge đã thanh toán nếu paid */}
+        {order.payment_status === "paid" && (
+          <Badge bg="success" className="px-3 py-2">
+            <CheckCircle size={14} className="me-1" />
+            Đã thanh toán
+          </Badge>
+        )}
       </div>
     </div>
   );
